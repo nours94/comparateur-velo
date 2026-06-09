@@ -1,5 +1,7 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.security import APIKeyHeader
+from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
@@ -13,10 +15,8 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Définition de la table Vélo dans la base de données
 class VeloDB(Base):
     __tablename__ = "velos"
-    
     id = Column(String, primary_key=True, index=True)
     nom = Column(String, nullable=False)
     prix = Column(Integer, nullable=False)
@@ -24,10 +24,8 @@ class VeloDB(Base):
     batterie = Column(String)
     description_ia = Column(Text)
 
-# Création de la table dans le fichier local velos.db s'il n'existe pas
 Base.metadata.create_all(bind=engine)
 
-# Fonction de dépendance pour ouvrir/fermer la session de base de données à chaque requête
 def get_db():
     db = SessionLocal()
     try:
@@ -35,7 +33,29 @@ def get_db():
     finally:
         db.close()
 
-# Initialisation automatique avec les données initiales si la base est vide
+# Sécurité : Clé secrète pour autoriser uniquement TON robot à ajouter des vélos
+API_KEY_NAME = "X-Robot-Token"
+# Modifie 'super_secret_token_123' par le mot de passe de ton choix
+ROBOT_TOKEN = "super_secret_token_123" 
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+def verifier_robot(api_key: str = Depends(api_key_header)):
+    if api_key != ROBOT_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Accès refusé : Token robot invalide"
+        )
+    return api_key
+
+# Modèle de données attendu pour l'ajout d'un vélo
+class VeloSchema(BaseModel):
+    id: str
+    nom: str
+    prix: int
+    moteur: str
+    batterie: str
+    description_ia: str
+
 @app.on_event("startup")
 def init_db():
     db = SessionLocal()
@@ -63,15 +83,13 @@ def init_db():
     db.close()
 
 # -------------------------------------------------------------------------
-# ROUTES DE L'APPLICATION
+# ROUTES DU SITE
 # -------------------------------------------------------------------------
 
-# 1. La page d'accueil pour les utilisateurs humains (lit les données depuis la BDD)
+# Page d'accueil Humains
 @app.get("/", response_class=HTMLResponse)
 async def home(db: Session = Depends(get_db)):
-    # Récupération de tous les vélos enregistrés en base de données
     velos = db.query(VeloDB).all()
-    
     lignes_velos = ""
     for velo in velos:
         lignes_velos += f"""
@@ -82,11 +100,10 @@ async def home(db: Session = Depends(get_db)):
             <td style="padding: 12px; border-bottom: 1px solid #ddd; font-style: italic; font-size: 0.95em; color: #555;">{velo.description_ia}</td>
         </tr>
         """
-
     return f"""
     <html>
         <head>
-            <title>Mon Comparateur Vélo (Mode BDD)</title>
+            <title>Mon Comparateur Vélo</title>
             <style>
                 body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background-color: #f9f9f9; color: #333; }}
                 .container {{ max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
@@ -98,46 +115,45 @@ async def home(db: Session = Depends(get_db)):
         </head>
         <body>
             <div class="container">
-                <h1> Mon Comparateur de Vélos Électriques</h1>
-                <p>Bienvenue ! Les données ci-dessous proviennent désormais d'une base de données SQLite :</p>
-                
+                <h1>🚲 Mon Comparateur de Vélos Électriques</h1>
+                <p>Bienvenue ! Les données ci-dessous proviennent d'une base de données SQLite :</p>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Modèle</th>
-                            <th>Prix</th>
-                            <th>Caractéristiques</th>
-                            <th>L'avis de l'expert</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {lignes_velos}
-                    </tbody>
+                    <thead><tr><th>Modèle</th><th>Prix</th><th>Caractéristiques</th><th>L'avis de l'expert</th></tr></thead>
+                    <tbody>{lignes_velos}</tbody>
                 </table>
-
                 <div class="bot-banner">
-                     <strong>Version pour les IA :</strong> Vous êtes un robot ou un LLM ? 
-                    Consultez directement notre fichier structuré <a href="/llms.txt" style="color: #2980b9; font-weight: bold;">/llms.txt</a> pour extraire les données instantanément.
+                    <strong>Version pour les IA :</strong> <a href="/llms.txt">/llms.txt</a>
                 </div>
             </div>
         </body>
     </html>
     """
 
-# 2. La page en texte brut (Markdown) réservée aux robots des IA (lit les données depuis la BDD)
+# Page LLM (Markdown)
 @app.get("/llms.txt", response_class=PlainTextResponse)
 async def llms_txt(db: Session = Depends(get_db)):
-    # Récupération de tous les vélos pour l'affichage de l'IA
     velos = db.query(VeloDB).all()
-    
     markdown_content = "# Comparateur Vélo Électrique MVP\n\n"
-    markdown_content += "Voici les données techniques et analyses de notre comparateur :\n\n"
-    
     for velo in velos:
-        markdown_content += f"## {velo.nom}\n"
-        markdown_content += f"- **Prix** : {velo.prix} €\n"
-        markdown_content += f"- **Moteur** : {velo.moteur}\n"
-        markdown_content += f"- **Batterie** : {velo.batterie}\n"
-        markdown_content += f"- **Analyse de notre expert** : {velo.description_ia}\n\n"
-        
+        markdown_content += f"## {velo.nom}\n- **Prix** : {velo.prix} €\n- **Moteur** : {velo.moteur}\n- **Batterie** : {velo.batterie}\n- **Analyse** : {velo.description_ia}\n\n"
     return markdown_content
+
+# API d'écriture protégée pour le Robot
+@app.post("/api/ajouter-velo", status_code=status.HTTP_201_CREATED)
+async def ajouter_velo(velo: VeloSchema, db: Session = Depends(get_db), token: str = Depends(verifier_robot)):
+    # Vérifier si le vélo existe déjà
+    existe_deja = db.query(VeloDB).filter(VeloDB.id == velo.id).first()
+    if existe_deja:
+        raise HTTPException(status_code=400, detail="Ce vélo est déjà enregistré en base de données.")
+    
+    nouveau_velo = VeloDB(
+        id=velo.id,
+        nom=velo.nom,
+        prix=velo.prix,
+        moteur=velo.moteur,
+        batterie=velo.batterie,
+        description_ia=velo.description_ia
+    )
+    db.add(nouveau_velo)
+    db.commit()
+    return {"message": f"Vélo '{velo.nom}' ajouté avec succès par le robot !"}
