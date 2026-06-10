@@ -33,7 +33,7 @@ def get_db():
     finally:
         db.close()
 
-# Sécurité : Clé secrète pour autoriser uniquement TON robot ou TON formulaire à ajouter des vélos
+# Sécurité : Clé secrète pour autoriser uniquement TON robot ou TON formulaire
 API_KEY_NAME = "X-Robot-Token"
 ROBOT_TOKEN = "super_secret_token_123"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
@@ -46,7 +46,6 @@ def verifier_robot(api_key: str = Depends(api_key_header)):
         )
     return api_key
 
-# Modèle de données attendu pour l'ajout d'un vélo via JSON (Robot)
 class VeloSchema(BaseModel):
     id: str
     nom: str
@@ -82,56 +81,293 @@ def init_db():
     db.close()
 
 # -------------------------------------------------------------------------
-# ROUTES DU SITE
+# ROUTES DU SITE (REFONTE VISUELLE MÉTAMORPHOSÉE)
 # -------------------------------------------------------------------------
 
-# Page d'accueil Humains
 @app.get("/", response_class=HTMLResponse)
 async def home(db: Session = Depends(get_db)):
     velos = db.query(VeloDB).all()
-    lignes_velos = ""
+    
+    # Génération des cartes de vélos dynamiques au look moderne
+    cartes_velos = ""
     for velo in velos:
-        lignes_velos += f"""
-        <tr>
-            <td style="padding: 12px; border-bottom: 1px solid #ddd; font-weight: bold;">{velo.nom}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #ddd; color: #2ecc71; font-weight: bold;">{velo.prix} €</td>
-            <td style="padding: 12px; border-bottom: 1px solid #ddd; font-size: 0.9em;">{velo.moteur} <br><small style="color:#777">{velo.batterie}</small></td>
-            <td style="padding: 12px; border-bottom: 1px solid #ddd; font-style: italic; font-size: 0.95em; color: #555;">{velo.description_ia}</td>
-        </tr>
-        """
-    return f"""
-    <html>
-        <head>
-            <title>Mon Comparateur Vélo</title>
-            <style>
-                body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background-color: #f9f9f9; color: #333; }}
-                .container {{ max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
-                h1 {{ color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }}
-                table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-                th {{ background-color: #f4f6f7; padding: 12px; text-align: left; color: #34495e; }}
-                .bot-banner {{ background-color: #e8f4fd; border-left: 4px solid #3498db; padding: 15px; margin-top: 30px; border-radius: 4px; }}
-                .btn-admin {{ display: inline-block; background-color: #34495e; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-bottom: 15px; float: right;}}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <a href="/admin" class="btn-admin">⚙️ Espace Admin</a>
-                <h1>🚲 Mon Comparateur de Vélos Électriques</h1>
-                <p>Bienvenue ! Les données ci-dessous proviennent d'une base de données SQLite :</p>
-                <table>
-                    <thead><tr><th>Modèle</th><th>Prix</th><th>Caractéristiques</th><th>L'avis de l'expert</th></tr></thead>
-                    <tbody>{lignes_velos}</tbody>
-                </table>
-                <div class="bot-banner">
-                    <strong>Version pour les IA :</strong> <a href="/llms.txt">/llms.txt</a>
+        cartes_velos += f"""
+        <div class="velo-card">
+            <div class="velo-header">
+                <span class="bike-icon">🚲</span>
+                <h2 class="velo-title">{velo.nom}</h2>
+            </div>
+            
+            <div class="velo-price-tag">{velo.prix} €</div>
+            
+            <div class="velo-specs">
+                <div class="spec-item">
+                    <span class="spec-icon">⚡</span>
+                    <div>
+                        <strong>Moteur</strong>
+                        <p>{velo.moteur}</p>
+                    </div>
+                </div>
+                <div class="spec-item">
+                    <span class="spec-icon">🔋</span>
+                    <div>
+                        <strong>Batterie</strong>
+                        <p>{velo.batterie}</p>
+                    </div>
                 </div>
             </div>
-        </body>
+            
+            <div class="velo-review">
+                <strong>📋 L'avis de l'expert :</strong>
+                <p>{velo.description_ia}</p>
+            </div>
+        </div>
+        """
+        
+    return f"""
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>VéloÉlec - Le Comparateur Moderne</title>
+        <style>
+            :root {{
+                --primary: #3498db;
+                --primary-dark: #2980b9;
+                --dark: #2c3e50;
+                --bg: #f5f7fa;
+                --card-bg: #ffffff;
+                --text: #34495e;
+                --success: #2ecc71;
+            }}
+            
+            body {{
+                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+                background-color: var(--bg);
+                color: var(--text);
+                margin: 0;
+                padding: 0;
+            }}
+            
+            /* Navbar supérieure */
+            .navbar {{
+                background-color: var(--dark);
+                padding: 15px 30px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }}
+            
+            .navbar-brand {{
+                color: white;
+                font-size: 22px;
+                font-weight: bold;
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }}
+            
+            .btn-admin {{
+                background-color: var(--primary);
+                color: white;
+                padding: 10px 20px;
+                text-decoration: none;
+                border-radius: 20px;
+                font-weight: bold;
+                font-size: 14px;
+                transition: background 0.3s, transform 0.2s;
+            }}
+            
+            .btn-admin:hover {{
+                background-color: var(--primary-dark);
+                transform: translateY(-2px);
+            }}
+            
+            /* Conteneur principal */
+            .main-container {{
+                max-width: 1200px;
+                margin: 40px auto;
+                padding: 0 20px;
+            }}
+            
+            .hero-section {{
+                text-align: center;
+                margin-bottom: 40px;
+            }}
+            
+            .hero-section h1 {{
+                color: var(--dark);
+                font-size: 36px;
+                margin-bottom: 10px;
+            }}
+            
+            .hero-section p {{
+                color: #7f8c8d;
+                font-size: 18px;
+                margin-top: 0;
+            }}
+            
+            /* Grille de cartes */
+            .velo-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                gap: 30px;
+                margin-top: 20px;
+            }}
+            
+            .velo-card {{
+                background: var(--card-bg);
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+                padding: 25px;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+                transition: transform 0.3s, box-shadow 0.3s;
+                border: 1px solid rgba(0,0,0,0.02);
+            }}
+            
+            .velo-card:hover {{
+                transform: translateY(-5px);
+                box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+            }}
+            
+            .velo-header {{
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                margin-bottom: 15px;
+            }}
+            
+            .bike-icon {{
+                font-size: 24px;
+                background: #e8f4fd;
+                padding: 8px;
+                border-radius: 12px;
+            }}
+            
+            .velo-title {{
+                font-size: 20px;
+                color: var(--dark);
+                margin: 0;
+                line-height: 1.3;
+            }}
+            
+            .velo-price-tag {{
+                align-self: flex-start;
+                background-color: var(--success);
+                color: white;
+                padding: 6px 16px;
+                font-weight: bold;
+                font-size: 18px;
+                border-radius: 30px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+            }}
+            
+            /* Fiche Technique */
+            .velo-specs {{
+                background: #f8fafc;
+                border-radius: 12px;
+                padding: 15px;
+                margin-bottom: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }}
+            
+            .spec-item {{
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }}
+            
+            .spec-icon {{
+                font-size: 18px;
+            }}
+            
+            .spec-item strong {{
+                font-size: 12px;
+                text-transform: uppercase;
+                color: #95a5a6;
+                display: block;
+            }}
+            
+            .spec-item p {{
+                margin: 2px 0 0 0;
+                font-size: 14px;
+                color: var(--dark);
+                font-weight: 500;
+            }}
+            
+            /* Section Avis */
+            .velo-review {{
+                border-top: 1px dashed #e2e8f0;
+                padding-top: 15px;
+                margin-top: auto;
+            }}
+            
+            .velo-review strong {{
+                font-size: 14px;
+                color: var(--dark);
+                display: block;
+                margin-bottom: 6px;
+            }}
+            
+            .velo-review p {{
+                margin: 0;
+                font-style: italic;
+                font-size: 14px;
+                color: #555;
+                line-height: 1.5;
+            }}
+            
+            /* Bannière basse */
+            .bot-banner {{
+                background-color: #e8f4fd;
+                border-left: 4px solid var(--primary);
+                padding: 15px;
+                margin-top: 50px;
+                border-radius: 8px;
+                font-size: 14px;
+            }}
+            
+            .bot-banner a {{
+                color: var(--primary-dark);
+                font-weight: bold;
+                text-decoration: none;
+            }}
+        </style>
+    </head>
+    <body>
+        <nav class="navbar">
+            <a href="/" class="navbar-brand">⚡ VéloÉlec</a>
+            <a href="/admin" class="btn-admin">⚙️ Tableau de Bord Admin</a>
+        </nav>
+        
+        <div class="main-container">
+            <div class="hero-section">
+                <h1>🚲 Fiches Comparatives des Vélos Électriques</h1>
+                <p>Trouvez le modèle idéal analysé objectivement par notre intelligence artificielle et nos experts.</p>
+            </div>
+            
+            <div class="velo-grid">
+                {cartes_velos}
+            </div>
+            
+            <div class="bot-banner">
+                🤖 <strong>Mode Data Optimize :</strong> Flux brute optimisé pour l'indexation par les grands modèles de langage disponible sur <a href="/llms.txt">/llms.txt</a>.
+            </div>
+        </div>
+    </body>
     </html>
     """
 
 # -------------------------------------------------------------------------
-# NOUVEAUTÉ : PAGE DU DASHBOARD ADMIN
+# PAGE DU DASHBOARD ADMIN
 # -------------------------------------------------------------------------
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard():
@@ -202,7 +438,7 @@ async def llms_txt(db: Session = Depends(get_db)):
     return markdown_content
 
 # -------------------------------------------------------------------------
-# API MISE À JOUR : ACCEPTE LE ROBOT (JSON) ET LE FORMULAIRE MANUEL
+# API : TRAITEMENT DE L'AJOUT DE VÉLO
 # -------------------------------------------------------------------------
 @app.post("/api/ajouter-velo", status_code=status.HTTP_201_CREATED)
 async def ajouter_velo(
@@ -214,13 +450,11 @@ async def ajouter_velo(
     batterie: str = Form(None),
     description_ia: str = Form(None),
     robot_token_form: str = Form(None),
-    velo_json: VeloSchema = None # Pour intercepter le robot
+    velo_json: VeloSchema = None
 ):
-    # ÉTAPE 1 : On détermine si la requête vient du Formulaire ou du Robot
-    if robot_token_form:  # ---- PROVIENT DE LA PAGE ADMIN ----
+    if robot_token_form:
         if robot_token_form != ROBOT_TOKEN:
             raise HTTPException(status_code=401, detail="Token d'administration invalide")
-        
         id_final = id
         nom_final = nom
         prix_final = prix
@@ -228,12 +462,9 @@ async def ajouter_velo(
         batterie_final = batterie
         description_final = description_ia
         est_formulaire = True
-        
-    else:  # ---- PROVIENT DU ROBOT PYTHON (JSON) ----
-        # Si FastAPI n'a pas pu valider le JSON automatiquement à cause du format Form, on le récupère manuellement
+    else:
         if not velo_json:
             raise HTTPException(status_code=400, detail="Données invalides")
-        
         id_final = velo_json.id
         nom_final = velo_json.nom
         prix_final = velo_json.prix
@@ -242,7 +473,6 @@ async def ajouter_velo(
         description_final = velo_json.description_ia
         est_formulaire = False
 
-    # ÉTAPE 2 : Insertion dans la base SQLite (Identique pour les deux)
     existe_deja = db.query(VeloDB).filter(VeloDB.id == id_final).first()
     if existe_deja:
         raise HTTPException(status_code=400, detail="Ce vélo est déjà enregistré en base de données.")
@@ -258,10 +488,7 @@ async def ajouter_velo(
     db.add(nouveau_velo)
     db.commit()
     
-    # ÉTAPE 3 : Réponse personnalisée selon l'expéditeur
     if est_formulaire:
-        # Si c'est un humain depuis l'admin, on le redirige proprement sur la page d'accueil pour voir son vélo en ligne !
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     else:
-        # Si c'est ton script Python robot_ia.py, on renvoie le message JSON attendu
         return {"message": f"Vélo '{nom_final}' ajouté avec succès par le robot !"}
