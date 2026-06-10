@@ -8,10 +8,9 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session
 app = FastAPI()
 
 # -------------------------------------------------------------------------
-# CONFIGURATION DE LA BASE DE DONNÉES (SQLite PIÉGÉE CORRIGÉE)
+# CONFIGURATION DE LA BASE DE DONNÉES (SQLite)
 # -------------------------------------------------------------------------
-# Note : N'oublie pas de créer ton "Volume" sur Render (/data) pour ne rien perdre !
-DATABASE_URL = "sqlite:////data/velos.db"
+DATABASE_URL = "sqlite:///./velos.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -34,10 +33,20 @@ def get_db():
     finally:
         db.close()
 
+# Sécurité : Clé secrète pour autoriser uniquement TON robot ou TON formulaire à ajouter des vélos
 API_KEY_NAME = "X-Robot-Token"
 ROBOT_TOKEN = "super_secret_token_123"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
+def verifier_robot(api_key: str = Depends(api_key_header)):
+    if api_key != ROBOT_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Accès refusé : Token robot invalide"
+        )
+    return api_key
+
+# Modèle de données attendu pour l'ajout d'un vélo via JSON (Robot)
 class VeloSchema(BaseModel):
     id: str
     nom: str
@@ -65,7 +74,7 @@ def init_db():
                 prix=1599,
                 moteur="Moteur central Naka Hub One 60Nm",
                 batterie="460 Wh",
-                description_ia="Le meilleur rapport qualité/prix urbain actuel. // + Moteur central coupleux (60Nm), équipement complet (garde-boue, béquille), bonne autonomie. // - Esthétique un peu classique, poids important."
+                description_ia="Le meilleur rapport qualité/prix urbain actuel. // + Moteur central coupleux (60Nm), équipement complet, bonne autonomie. // - Esthétique un peu classique, poids important."
             )
         ]
         db.add_all(velos_init)
@@ -73,15 +82,17 @@ def init_db():
     db.close()
 
 # -------------------------------------------------------------------------
-# ROUTES DU SITE : PAGE D'ACCUEIL AVEC FILTRES DYNAMIQUES
+# ROUTES DU SITE
 # -------------------------------------------------------------------------
 
+# Page d'accueil Humains (Style cartes + filtres JS)
 @app.get("/", response_class=HTMLResponse)
 async def home(db: Session = Depends(get_db)):
     velos = db.query(VeloDB).all()
-    
     cartes_velos = ""
+    
     for velo in velos:
+        # Découpage de l'avis de l'expert si présence de "//"
         blocs = velo.description_ia.split("//")
         avis_general = blocs[0].strip()
         
@@ -109,8 +120,7 @@ async def home(db: Session = Depends(get_db)):
                 {f'<ul class="cons-list">{points_faibles_html}</ul>' if points_faibles_html else ''}
             </div>
             """
-        
-        # NOTE IMPORTANTE : On injecte le prix et le nom dans des attributs 'data-' pour que le JS puisse filtrer
+            
         cartes_velos += f"""
         <div class="velo-card" data-prix="{velo.prix}" data-nom="{velo.nom.lower()}" data-moteur="{velo.moteur.lower()}">
             <div class="velo-header">
@@ -166,7 +176,6 @@ async def home(db: Session = Depends(get_db)):
             .navbar-brand {{ color: white; font-size: 22px; font-weight: bold; text-decoration: none; }}
             .btn-admin {{ background-color: var(--primary); color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; }}
             .btn-admin:hover {{ background-color: var(--primary-dark); transform: translateY(-2px); }}
-            
             .main-container {{ max-width: 1200px; margin: 40px auto; padding: 0 20px; }}
             .hero-section {{ text-align: center; margin-bottom: 30px; }}
             .hero-section h1 {{ color: var(--dark); font-size: 36px; margin-bottom: 10px; }}
@@ -174,28 +183,12 @@ async def home(db: Session = Depends(get_db)):
             
             /* BARRE DE FILTRES STYLE PROFESSIONNEL */
             .filter-bar {{
-                background: white;
-                padding: 20px;
-                border-radius: 12px;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-                margin-bottom: 30px;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 20px;
-                align-items: center;
-                justify-content: space-between;
-                border: 1px solid #e2e8f0;
+                background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+                margin-bottom: 30px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between; border: 1px solid #e2e8f0;
             }}
             .filter-group {{ display: flex; align-items: center; gap: 10px; }}
             .filter-group label {{ font-weight: bold; font-size: 14px; color: var(--dark); }}
-            .filter-bar input, .filter-bar select {{
-                padding: 10px 14px;
-                border: 1px solid #cbd5e1;
-                border-radius: 8px;
-                font-size: 14px;
-                outline: none;
-                background-color: #f8fafc;
-            }}
+            .filter-bar input, .filter-bar select {{ padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; background-color: #f8fafc; }}
             .filter-bar input:focus, .filter-bar select:focus {{ border-color: var(--primary); background-color: #fff; }}
             
             .velo-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; margin-top: 20px; }}
@@ -215,7 +208,6 @@ async def home(db: Session = Depends(get_db)):
             .review-text {{ margin: 0 0 15px 0; font-style: italic; font-size: 14px; color: #555; line-height: 1.5; }}
             .pros-cons-container {{ display: flex; flex-direction: column; gap: 10px; font-size: 13px; background: #fafbfc; padding: 12px; border-radius: 8px; }}
             .pros-list, .cons-list {{ margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; }}
-            
             .bot-banner {{ background-color: #e8f4fd; border-left: 4px solid var(--primary); padding: 15px; margin-top: 50px; border-radius: 8px; font-size: 14px; }}
             .bot-banner a {{ color: var(--primary-dark); font-weight: bold; text-decoration: none; }}
         </style>
@@ -223,13 +215,13 @@ async def home(db: Session = Depends(get_db)):
     <body>
         <nav class="navbar">
             <a href="/" class="navbar-brand">⚡ VéloÉlec</a>
-            <a href="/admin" class="btn-admin">⚙️ Tableau de Bord Admin</a>
+            <a href="/admin" class="btn-admin">⚙️ Espace Admin</a>
         </nav>
         
         <div class="main-container">
             <div class="hero-section">
                 <h1>🚲 Fiches Comparatives des Vélos Électriques</h1>
-                <p>Trouvez le modèle idéal au meilleur prix grâce à nos analyses.</p>
+                <p>Bienvenue ! Les données ci-dessous proviennent d'une base de données SQLite :</p>
             </div>
             
             <div class="filter-bar">
@@ -245,7 +237,7 @@ async def home(db: Session = Depends(get_db)):
                 </div>
                 
                 <div class="filter-group">
-                    <label for="tri">Sort Trier par</label>
+                    <label for="tri">➡️ Trier par</label>
                     <select id="tri" onchange="filtrerLesVelos()">
                         <option value="defaut">Pertinence</option>
                         <option value="prix-croissant">Prix : du - cher au + cher</option>
@@ -259,7 +251,7 @@ async def home(db: Session = Depends(get_db)):
             </div>
             
             <div class="bot-banner">
-                🤖 <strong>Mode Data Optimize :</strong> Flux brut optimisé disponible sur <a href="/llms.txt">/llms.txt</a>.
+                <strong>Version pour les IA :</strong> <a href="/llms.txt">/llms.txt</a>
             </div>
         </div>
 
@@ -277,7 +269,6 @@ async def home(db: Session = Depends(get_db)):
                     const moteur = carte.getAttribute('data-moteur');
                     const prix = parseFloat(carte.getAttribute('data-prix'));
                     
-                    // Vérification des critères de filtre
                     const correspondRecherche = nom.includes(tRecherche) || moteur.includes(tRecherche);
                     const correspondBudget = prix <= budgetMax;
                     
@@ -288,7 +279,6 @@ async def home(db: Session = Depends(get_db)):
                     }}
                 }});
                 
-                // Gestion du Tri Dynamique
                 if (triOption === 'prix-croissant') {{
                     cartes.sort((a, b) => parseFloat(a.getAttribute('data-prix')) - parseFloat(b.getAttribute('data-prix')));
                     cartes.forEach(carte => grid.appendChild(carte));
@@ -303,7 +293,7 @@ async def home(db: Session = Depends(get_db)):
     """
 
 # -------------------------------------------------------------------------
-# PAGE DU DASHBOARD ADMIN (Identique)
+# NOUVEAUTÉ : PAGE DU DASHBOARD ADMIN
 # -------------------------------------------------------------------------
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard():
@@ -318,7 +308,7 @@ async def admin_dashboard():
                 .form-group {{ margin-bottom: 15px; }}
                 label {{ display: block; margin-bottom: 5px; font-weight: 600; color: #34495e; }}
                 input[type="text"], input[type="number"], textarea {{ width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; font-size: 14px; }}
-                textarea {{ height: 140px; resize: vertical; }}
+                textarea {{ height: 120px; resize: vertical; }}
                 .btn-submit {{ background-color: #3498db; color: white; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: background 0.2s; }}
                 .btn-submit:hover {{ background-color: #2980b9; }}
                 .btn-back {{ display: block; text-align: center; margin-top: 15px; color: #7f8c8d; text-decoration: none; font-size: 0.9em; }}
@@ -327,13 +317,14 @@ async def admin_dashboard():
         </head>
         <body>
             <div class="admin-container">
-                <h1>🚲 Ajouter ou Modifier un Vélo</h1>
+                <h1>🚲 Ajouter un Vélo manuellement</h1>
                 <form action="/api/ajouter-velo" method="POST">
                     <input type="hidden" name="robot_token_form" value="{ROBOT_TOKEN}">
                     
                     <div class="form-group">
                         <label>Identifiant Unique (ID)</label>
                         <input type="text" name="id" placeholder="Ex: rockrider-e-st100" required>
+                        <div class="note">Uniquement des lettres minuscules, chiffres et tirets (-).</div>
                     </div>
                     <div class="form-group">
                         <label>Nom complet du vélo</label>
@@ -353,12 +344,12 @@ async def admin_dashboard():
                     </div>
                     <div class="form-group">
                         <label>Avis de l'expert & Points Forts/Faibles</label>
-                        <textarea name="description_ia" placeholder="Phrase d'introduction générale. // + Point fort 1, Point fort 2 // - Point faible 1, Point faible 2" required></textarea>
+                        <textarea name="description_ia" placeholder="Phrase d'introduction générale. // + Point fort 1, Point fort 2 // - Point faible 1" required></textarea>
                         <div class="note">
-                            <strong>💡 Rappel Format :</strong> Sépare avec <code>//</code> en mettant un <code>+</code> pour les qualités et un <code>-</code> pour les défauts.
+                            <strong>💡 Format d'affichage Pro :</strong> Écris une phrase, puis sépare avec <code>//</code> en mettant <code>+</code> pour les qualités et <code>-</code> pour les défauts (sépare par des virgules).
                         </div>
                     </div>
-                    <button type="submit" class="btn-submit">🚀 Enregistrer (Mise à jour en direct)</button>
+                    <button type="submit" class="btn-submit">🚀 Mettre en ligne instantanément</button>
                 </form>
                 <a href="/" class="btn-back">⬅️ Retourner sur le site public</a>
             </div>
@@ -376,7 +367,7 @@ async def llms_txt(db: Session = Depends(get_db)):
     return markdown_content
 
 # -------------------------------------------------------------------------
-# API : TRAITEMENT (UPSERT)
+# API : AJOUT ET LOGIQUE DE MISE A JOUR (UPSERT)
 # -------------------------------------------------------------------------
 @app.post("/api/ajouter-velo", status_code=status.HTTP_201_CREATED)
 async def ajouter_velo(
@@ -388,9 +379,9 @@ async def ajouter_velo(
     batterie: str = Form(None),
     description_ia: str = Form(None),
     robot_token_form: str = Form(None),
-    velo_json: VeloSchema = None
+    velo_json: VeloSchema = None 
 ):
-    if robot_token_form:
+    if robot_token_form: 
         if robot_token_form != ROBOT_TOKEN:
             raise HTTPException(status_code=401, detail="Token d'administration invalide")
         id_final = id
@@ -400,7 +391,8 @@ async def ajouter_velo(
         batterie_final = batterie
         description_final = description_ia
         est_formulaire = True
-    else:
+        
+    else: 
         if not velo_json:
             raise HTTPException(status_code=400, detail="Données invalides")
         id_final = velo_json.id
@@ -411,14 +403,15 @@ async def ajouter_velo(
         description_final = velo_json.description_ia
         est_formulaire = False
 
-    velo_existant = db.query(VeloDB).filter(VeloDB.id == id_final).first()
-    
-    if velo_existant:
-        velo_existant.nom = nom_final
-        velo_existant.prix = prix_final
-        velo_existant.moteur = moteur_final
-        velo_existant.batterie = batterie_final
-        velo_existant.description_ia = description_final
+    # Correction de ton problème de blocage : logique d'écrase-et-remplace (UPSERT)
+    existe_deja = db.query(VeloDB).filter(VeloDB.id == id_final).first()
+    if existe_deja:
+        # Au lieu de renvoyer une erreur 400, on met à jour les données !
+        existe_deja.nom = nom_final
+        existe_deja.prix = prix_final
+        existe_deja.moteur = moteur_final
+        existe_deja.batterie = batterie_final
+        existe_deja.description_ia = description_final
         db.commit()
         message_retour = f"Vélo '{nom_final}' mis à jour avec succès !"
     else:
