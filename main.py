@@ -8,9 +8,10 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session
 app = FastAPI()
 
 # -------------------------------------------------------------------------
-# CONFIGURATION DE LA BASE DE DONNÉES (SQLite)
+# CONFIGURATION DE LA BASE DE DONNÉES (SQLite PIÉGÉE CORRIGÉE)
 # -------------------------------------------------------------------------
-DATABASE_URL = "sqlite:///./velos.db"
+# Note : N'oublie pas de créer ton "Volume" sur Render (/data) pour ne rien perdre !
+DATABASE_URL = "sqlite:////data/velos.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -72,7 +73,7 @@ def init_db():
     db.close()
 
 # -------------------------------------------------------------------------
-# ROUTES DU SITE
+# ROUTES DU SITE : PAGE D'ACCUEIL AVEC FILTRES DYNAMIQUES
 # -------------------------------------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
@@ -81,7 +82,6 @@ async def home(db: Session = Depends(get_db)):
     
     cartes_velos = ""
     for velo in velos:
-        # Découpage intelligent du texte de l'expert s'il contient le séparateur "//"
         blocs = velo.description_ia.split("//")
         avis_general = blocs[0].strip()
         
@@ -91,7 +91,6 @@ async def home(db: Session = Depends(get_db)):
         for bloc in blocs[1:]:
             texte_bloc = bloc.strip()
             if texte_bloc.startswith("+"):
-                # On nettoie le "+" et on sépare par des virgules si besoin
                 elements = texte_bloc.replace("+", "").split(",")
                 for el in elements:
                     if el.strip(): points_forts_html += f"<li>🟢 {el.strip()}</li>"
@@ -100,7 +99,6 @@ async def home(db: Session = Depends(get_db)):
                 for el in elements:
                     if el.strip(): points_faibles_html += f"<li>🔴 {el.strip()}</li>"
 
-        # Si le format n'est pas respecté, on affiche juste le texte brut
         if not points_forts_html and not points_faibles_html:
             pros_cons_section = f"<p class='review-text'>{velo.description_ia}</p>"
         else:
@@ -112,8 +110,9 @@ async def home(db: Session = Depends(get_db)):
             </div>
             """
         
+        # NOTE IMPORTANTE : On injecte le prix et le nom dans des attributs 'data-' pour que le JS puisse filtrer
         cartes_velos += f"""
-        <div class="velo-card">
+        <div class="velo-card" data-prix="{velo.prix}" data-nom="{velo.nom.lower()}" data-moteur="{velo.moteur.lower()}">
             <div class="velo-header">
                 <span class="bike-icon">🚲</span>
                 <h2 class="velo-title">{velo.nom}</h2>
@@ -167,10 +166,38 @@ async def home(db: Session = Depends(get_db)):
             .navbar-brand {{ color: white; font-size: 22px; font-weight: bold; text-decoration: none; }}
             .btn-admin {{ background-color: var(--primary); color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; font-weight: bold; font-size: 14px; transition: all 0.3s; }}
             .btn-admin:hover {{ background-color: var(--primary-dark); transform: translateY(-2px); }}
+            
             .main-container {{ max-width: 1200px; margin: 40px auto; padding: 0 20px; }}
-            .hero-section {{ text-align: center; margin-bottom: 40px; }}
+            .hero-section {{ text-align: center; margin-bottom: 30px; }}
             .hero-section h1 {{ color: var(--dark); font-size: 36px; margin-bottom: 10px; }}
             .hero-section p {{ color: #7f8c8d; font-size: 18px; margin: 0; }}
+            
+            /* BARRE DE FILTRES STYLE PROFESSIONNEL */
+            .filter-bar {{
+                background: white;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+                margin-bottom: 30px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 20px;
+                align-items: center;
+                justify-content: space-between;
+                border: 1px solid #e2e8f0;
+            }}
+            .filter-group {{ display: flex; align-items: center; gap: 10px; }}
+            .filter-group label {{ font-weight: bold; font-size: 14px; color: var(--dark); }}
+            .filter-bar input, .filter-bar select {{
+                padding: 10px 14px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                font-size: 14px;
+                outline: none;
+                background-color: #f8fafc;
+            }}
+            .filter-bar input:focus, .filter-bar select:focus {{ border-color: var(--primary); background-color: #fff; }}
+            
             .velo-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; margin-top: 20px; }}
             .velo-card {{ background: var(--card-bg); border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 25px; display: flex; flex-direction: column; transition: all 0.3s; border: 1px solid rgba(0,0,0,0.02); }}
             .velo-card:hover {{ transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }}
@@ -188,6 +215,7 @@ async def home(db: Session = Depends(get_db)):
             .review-text {{ margin: 0 0 15px 0; font-style: italic; font-size: 14px; color: #555; line-height: 1.5; }}
             .pros-cons-container {{ display: flex; flex-direction: column; gap: 10px; font-size: 13px; background: #fafbfc; padding: 12px; border-radius: 8px; }}
             .pros-list, .cons-list {{ margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; }}
+            
             .bot-banner {{ background-color: #e8f4fd; border-left: 4px solid var(--primary); padding: 15px; margin-top: 50px; border-radius: 8px; font-size: 14px; }}
             .bot-banner a {{ color: var(--primary-dark); font-weight: bold; text-decoration: none; }}
         </style>
@@ -197,24 +225,85 @@ async def home(db: Session = Depends(get_db)):
             <a href="/" class="navbar-brand">⚡ VéloÉlec</a>
             <a href="/admin" class="btn-admin">⚙️ Tableau de Bord Admin</a>
         </nav>
+        
         <div class="main-container">
             <div class="hero-section">
                 <h1>🚲 Fiches Comparatives des Vélos Électriques</h1>
-                <p>Trouvez le modèle idéal analysé objectivement par notre intelligence artificielle et nos experts.</p>
+                <p>Trouvez le modèle idéal au meilleur prix grâce à nos analyses.</p>
             </div>
-            <div class="velo-grid">
+            
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label for="search">🔍 Rechercher</label>
+                    <input type="text" id="search" placeholder="Ex: Decathlon, Rockrider..." oninput="filtrerLesVelos()">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="budget">💰 Budget Max</label>
+                    <input type="number" id="budget" placeholder="Ex: 1500" oninput="filtrerLesVelos()">
+                    <span style="font-size: 14px; color: #7f8c8d;">€</span>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="tri">Sort Trier par</label>
+                    <select id="tri" onchange="filtrerLesVelos()">
+                        <option value="defaut">Pertinence</option>
+                        <option value="prix-croissant">Prix : du - cher au + cher</option>
+                        <option value="prix-decroissant">Prix : du + cher au - cher</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="velo-grid" id="veloGrid">
                 {cartes_velos}
             </div>
+            
             <div class="bot-banner">
-                🤖 <strong>Mode Data Optimize :</strong> Flux brute optimisé pour l'indexation par les grands modèles de langage disponible sur <a href="/llms.txt">/llms.txt</a>.
+                🤖 <strong>Mode Data Optimize :</strong> Flux brut optimisé disponible sur <a href="/llms.txt">/llms.txt</a>.
             </div>
         </div>
+
+        <script>
+            function filtrerLesVelos() {{
+                const tRecherche = document.getElementById('search').value.toLowerCase();
+                const budgetMax = parseFloat(document.getElementById('budget').value) || Infinity;
+                const triOption = document.getElementById('tri').value;
+                
+                const grid = document.getElementById('veloGrid');
+                const cartes = Array.from(grid.getElementsByClassName('velo-card'));
+                
+                cartes.forEach(carte => {{
+                    const nom = carte.getAttribute('data-nom');
+                    const moteur = carte.getAttribute('data-moteur');
+                    const prix = parseFloat(carte.getAttribute('data-prix'));
+                    
+                    // Vérification des critères de filtre
+                    const correspondRecherche = nom.includes(tRecherche) || moteur.includes(tRecherche);
+                    const correspondBudget = prix <= budgetMax;
+                    
+                    if (correspondRecherche && correspondBudget) {{
+                        carte.style.display = "flex";
+                    }} else {{
+                        carte.style.display = "none";
+                    }}
+                }});
+                
+                // Gestion du Tri Dynamique
+                if (triOption === 'prix-croissant') {{
+                    cartes.sort((a, b) => parseFloat(a.getAttribute('data-prix')) - parseFloat(b.getAttribute('data-prix')));
+                    cartes.forEach(carte => grid.appendChild(carte));
+                }} else if (triOption === 'prix-decroissant') {{
+                    cartes.sort((a, b) => parseFloat(b.getAttribute('data-prix')) - parseFloat(a.getAttribute('data-prix')));
+                    cartes.forEach(carte => grid.appendChild(carte));
+                }}
+            }}
+        </script>
     </body>
     </html>
     """
 
 # -------------------------------------------------------------------------
-# PAGE DU DASHBOARD ADMIN
+# PAGE DU DASHBOARD ADMIN (Identique)
 # -------------------------------------------------------------------------
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard():
@@ -266,8 +355,7 @@ async def admin_dashboard():
                         <label>Avis de l'expert & Points Forts/Faibles</label>
                         <textarea name="description_ia" placeholder="Phrase d'introduction générale. // + Point fort 1, Point fort 2 // - Point faible 1, Point faible 2" required></textarea>
                         <div class="note">
-                            <strong>💡 Nouveau Format pour l'affichage Pro :</strong><br>
-                            Écris ton texte normalement, puis sépare avec <code>//</code> en mettant un <code>+</code> pour les qualités et un <code>-</code> pour les défauts (sépare les éléments par des virgules).
+                            <strong>💡 Rappel Format :</strong> Sépare avec <code>//</code> en mettant un <code>+</code> pour les qualités et un <code>-</code> pour les défauts.
                         </div>
                     </div>
                     <button type="submit" class="btn-submit">🚀 Enregistrer (Mise à jour en direct)</button>
