@@ -33,18 +33,9 @@ def get_db():
     finally:
         db.close()
 
-# Sécurité : Clé secrète pour autoriser uniquement TON robot ou TON formulaire
 API_KEY_NAME = "X-Robot-Token"
 ROBOT_TOKEN = "super_secret_token_123"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
-
-def verifier_robot(api_key: str = Depends(api_key_header)):
-    if api_key != ROBOT_TOKEN:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Accès refusé : Token robot invalide"
-        )
-    return api_key
 
 class VeloSchema(BaseModel):
     id: str
@@ -65,7 +56,7 @@ def init_db():
                 prix=999,
                 moteur="Moteur roue arrière 42Nm",
                 batterie="380 Wh",
-                description_ia="Idéal pour débuter le VTT électrique à petit prix. Moteur arrière suffisant sur le plat, mais limité en forte pente."
+                description_ia="Idéal pour débuter le VTT électrique à petit prix. // + Prix très accessible, cadre robuste, position confortable. // - Moteur arrière limité en forte pente, autonomie juste pour les longues sorties."
             ),
             VeloDB(
                 id="nakamura-e-crossover",
@@ -73,7 +64,7 @@ def init_db():
                 prix=1599,
                 moteur="Moteur central Naka Hub One 60Nm",
                 batterie="460 Wh",
-                description_ia="Le meilleur rapport qualité/prix urbain actuel. Son moteur central de 60Nm est idéal pour franchir les côtes sans effort."
+                description_ia="Le meilleur rapport qualité/prix urbain actuel. // + Moteur central coupleux (60Nm), équipement complet (garde-boue, béquille), bonne autonomie. // - Esthétique un peu classique, poids important."
             )
         ]
         db.add_all(velos_init)
@@ -90,6 +81,37 @@ async def home(db: Session = Depends(get_db)):
     
     cartes_velos = ""
     for velo in velos:
+        # Découpage intelligent du texte de l'expert s'il contient le séparateur "//"
+        blocs = velo.description_ia.split("//")
+        avis_general = blocs[0].strip()
+        
+        points_forts_html = ""
+        points_faibles_html = ""
+        
+        for bloc in blocs[1:]:
+            texte_bloc = bloc.strip()
+            if texte_bloc.startswith("+"):
+                # On nettoie le "+" et on sépare par des virgules si besoin
+                elements = texte_bloc.replace("+", "").split(",")
+                for el in elements:
+                    if el.strip(): points_forts_html += f"<li>🟢 {el.strip()}</li>"
+            elif texte_bloc.startswith("-"):
+                elements = texte_bloc.replace("-", "").split(",")
+                for el in elements:
+                    if el.strip(): points_faibles_html += f"<li>🔴 {el.strip()}</li>"
+
+        # Si le format n'est pas respecté, on affiche juste le texte brut
+        if not points_forts_html and not points_faibles_html:
+            pros_cons_section = f"<p class='review-text'>{velo.description_ia}</p>"
+        else:
+            pros_cons_section = f"""
+            <p class='review-text'>{avis_general}</p>
+            <div class="pros-cons-container">
+                {f'<ul class="pros-list">{points_forts_html}</ul>' if points_forts_html else ''}
+                {f'<ul class="cons-list">{points_faibles_html}</ul>' if points_faibles_html else ''}
+            </div>
+            """
+        
         cartes_velos += f"""
         <div class="velo-card">
             <div class="velo-header">
@@ -118,7 +140,7 @@ async def home(db: Session = Depends(get_db)):
             
             <div class="velo-review">
                 <strong>📋 L'avis de l'expert :</strong>
-                <p>{velo.description_ia}</p>
+                {pros_cons_section}
             </div>
         </div>
         """
@@ -163,7 +185,9 @@ async def home(db: Session = Depends(get_db)):
             .spec-item p {{ margin: 2px 0 0 0; font-size: 14px; color: var(--dark); font-weight: 500; }}
             .velo-review {{ border-top: 1px dashed #e2e8f0; padding-top: 15px; margin-top: auto; }}
             .velo-review strong {{ font-size: 14px; color: var(--dark); display: block; margin-bottom: 6px; }}
-            .velo-review p {{ margin: 0; font-style: italic; font-size: 14px; color: #555; line-height: 1.5; }}
+            .review-text {{ margin: 0 0 15px 0; font-style: italic; font-size: 14px; color: #555; line-height: 1.5; }}
+            .pros-cons-container {{ display: flex; flex-direction: column; gap: 10px; font-size: 13px; background: #fafbfc; padding: 12px; border-radius: 8px; }}
+            .pros-list, .cons-list {{ margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; }}
             .bot-banner {{ background-color: #e8f4fd; border-left: 4px solid var(--primary); padding: 15px; margin-top: 50px; border-radius: 8px; font-size: 14px; }}
             .bot-banner a {{ color: var(--primary-dark); font-weight: bold; text-decoration: none; }}
         </style>
@@ -205,11 +229,11 @@ async def admin_dashboard():
                 .form-group {{ margin-bottom: 15px; }}
                 label {{ display: block; margin-bottom: 5px; font-weight: 600; color: #34495e; }}
                 input[type="text"], input[type="number"], textarea {{ width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 6px; box-sizing: border-box; font-size: 14px; }}
-                textarea {{ height: 120px; resize: vertical; }}
+                textarea {{ height: 140px; resize: vertical; }}
                 .btn-submit {{ background-color: #3498db; color: white; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: background 0.2s; }}
                 .btn-submit:hover {{ background-color: #2980b9; }}
                 .btn-back {{ display: block; text-align: center; margin-top: 15px; color: #7f8c8d; text-decoration: none; font-size: 0.9em; }}
-                .note {{ font-size: 12px; color: #7f8c8d; margin-top: 5px; background: #fff8db; padding: 5px; border-radius: 4px; border-left: 3px solid #f1c40f; }}
+                .note {{ font-size: 12px; color: #7f8c8d; margin-top: 5px; background: #fff8db; padding: 8px; border-radius: 4px; border-left: 3px solid #f1c40f; line-height: 1.4; }}
             </style>
         </head>
         <body>
@@ -221,7 +245,6 @@ async def admin_dashboard():
                     <div class="form-group">
                         <label>Identifiant Unique (ID)</label>
                         <input type="text" name="id" placeholder="Ex: rockrider-e-st100" required>
-                        <div class="note"><strong>Astuce Modification :</strong> Saisissez l'ID d'un vélo existant pour le modifier (ex: rockrider-e-st-100), ou créez-en un nouveau.</div>
                     </div>
                     <div class="form-group">
                         <label>Nom complet du vélo</label>
@@ -240,8 +263,12 @@ async def admin_dashboard():
                         <input type="text" name="batterie" placeholder="Ex: 460 Wh" required>
                     </div>
                     <div class="form-group">
-                        <label>Avis de l'expert (Copier l'IA ou Avis Personnel)</label>
-                        <textarea name="description_ia" placeholder="Colle l'avis généré par le robot ou écris ton propre retour d'expérience..." required></textarea>
+                        <label>Avis de l'expert & Points Forts/Faibles</label>
+                        <textarea name="description_ia" placeholder="Phrase d'introduction générale. // + Point fort 1, Point fort 2 // - Point faible 1, Point faible 2" required></textarea>
+                        <div class="note">
+                            <strong>💡 Nouveau Format pour l'affichage Pro :</strong><br>
+                            Écris ton texte normalement, puis sépare avec <code>//</code> en mettant un <code>+</code> pour les qualités et un <code>-</code> pour les défauts (sépare les éléments par des virgules).
+                        </div>
                     </div>
                     <button type="submit" class="btn-submit">🚀 Enregistrer (Mise à jour en direct)</button>
                 </form>
@@ -261,7 +288,7 @@ async def llms_txt(db: Session = Depends(get_db)):
     return markdown_content
 
 # -------------------------------------------------------------------------
-# API LOGIQUE MISE À JOUR : GÈRE L'AJOUT ET LA MODIFICATION (UPSERT)
+# API : TRAITEMENT (UPSERT)
 # -------------------------------------------------------------------------
 @app.post("/api/ajouter-velo", status_code=status.HTTP_201_CREATED)
 async def ajouter_velo(
@@ -296,11 +323,9 @@ async def ajouter_velo(
         description_final = velo_json.description_ia
         est_formulaire = False
 
-    # RECHERCHE SI LE VÉLO EXISTE DÉJÀ
     velo_existant = db.query(VeloDB).filter(VeloDB.id == id_final).first()
     
     if velo_existant:
-        # ---- MODE MODIFICATION : ON MET À JOUR LES CHAMPS ----
         velo_existant.nom = nom_final
         velo_existant.prix = prix_final
         velo_existant.moteur = moteur_final
@@ -309,7 +334,6 @@ async def ajouter_velo(
         db.commit()
         message_retour = f"Vélo '{nom_final}' mis à jour avec succès !"
     else:
-        # ---- MODE AJOUT : ON CRÉE UN NOUVEAU VÉLO ----
         nouveau_velo = VeloDB(
             id=id_final,
             nom=nom_final,
