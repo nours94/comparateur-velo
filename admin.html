@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Comparateur Vélo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .admin-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        input:focus, textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        .btn-submit {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover {
+            background-color: #2980b9;
+        }
+        .note {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <h1>🚲 Ajouter un Vélo manuellement</h1>
+    
+    <form action="/api/ajouter-velo" method="POST">
+        <input type="hidden" name="robot_token_form" value="super_secret_token_123">
+
+        <div class="form-group">
+            <label for="id">Identifiant Unique (ID)</label>
+            <input type="text" id="id" name="id" placeholder="Ex: rockrider-e-st100" required>
+            <div class="note">Uniquement des lettres minuscules, chiffres et tirets du 6 (-).</div>
+        </div>
+
+        <div class="form-group">
+            <label for="nom">Nom complet du vélo</label>
+            <input type="text" id="nom" name="nom" placeholder="Ex: Decathlon Rockrider E-ST 100" required>
+        </div>
+
+        <div class="form-group">
+            <label for="prix">Prix indicatif (€)</label>
+            <input type="number" id="prix" name="prix" placeholder="Ex: 899" required>
+        </div>
+
+        <div class="form-group">
+            <label for="moteur">Caractéristiques du moteur</label>
+            <input type="text" id="moteur" name="moteur" placeholder="Ex: Moteur central Naka E-Power Max, 100 Nm" required>
+        </div>
+
+        <div class="form-group">
+            <label for="batterie">Capacité de la batterie</label>
+            <input type="text" id="batterie" name="batterie" placeholder="Ex: 460 Wh" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description_ia">Avis de l'expert (IA ou Personnel)</label>
+            <textarea id="description_ia" name="description_ia" placeholder="Colle l'avis du robot ou écris ton propre retour d'expérience ici..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit">🚀 Mettre en ligne instantanément</button>
+    </form>
+</div>
+
+</body>
+</html>
