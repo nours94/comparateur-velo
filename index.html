@@ -38,6 +38,10 @@
 
     <script>
         let tousLesVelos = [];
+        
+        // Sécurité : On vérifie si "?admin=vrai" est présent dans la barre d'adresse
+        const urlParams = new URLSearchParams(window.location.search);
+        const estAdmin = urlParams.get('admin') === 'vrai';
 
         // 1. Appel de ton API Render pour charger les vélos
         async function chargerCatalogue() {
@@ -50,7 +54,7 @@
             }
         }
 
-        // 2. Affichage des vélos sous forme de cartes élégantes avec bouton d'édition sécurisé
+        // 2. Affichage des vélos sous forme de cartes élégantes
         function afficherVelos(liste) {
             const conteneur = document.getElementById('catalogue');
             conteneur.innerHTML = "";
@@ -61,7 +65,7 @@
             }
 
             liste.forEach(v => {
-                // Encodage des paramètres dans l'URL pour passer proprement les textes à la page d'administration
+                // Encodage complet des paramètres (y compris image_url)
                 const params = new URLSearchParams({
                     id: v.id,
                     nom: v.nom,
@@ -71,6 +75,13 @@
                     description_ia: v.description_ia || '',
                     image_url: v.image_url || ''
                 }).toString();
+
+                // Le bouton Modifier ne s'affiche QUE si estAdmin est vrai
+                const boutonModifier = estAdmin ? `
+                    <a href="/admin.html?${params}" style="display: block; text-align: center; background: #e67e22; color: white; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 14px; margin-top: auto; transition: background 0.2s;">
+                        ✏️ Modifier ce modèle
+                    </a>
+                ` : '';
 
                 conteneur.innerHTML += `
                     <div class="card">
@@ -86,9 +97,7 @@
                                 <strong>📝 L'avis de l'expert :</strong><br>
                                 ${v.description_ia || 'Aucun avis disponible.'}
                             </div>
-                            <a href="/admin.html?${params}" style="display: block; text-align: center; background: #e67e22; color: white; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 14px; margin-top: auto; transition: background 0.2s;">
-                                ✏️ Modifier ce modèle
-                            </a>
+                            ${boutonModifier}
                         </div>
                     </div>
                 `;
