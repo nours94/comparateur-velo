@@ -172,25 +172,28 @@ def ajouter_ou_mettre_a_jour_velo(
         db.add(nouveau_velo)
         db.commit()
         return {"status": "created", "message": f"Nouveau vélo ajouté avec succès : {nom}"}
-
+        
 # -------------------------------------------------------------------------
-# SERVIR LE FRONTEND (À laisser tout en bas)
+# SERVIR LE FRONTEND (Directement à la racine du projet)
 # -------------------------------------------------------------------------
-# Permet de lier ton dossier frontend si tu as des fichiers statiques (CSS, JS, Images)
-if os.path.exists("static"):
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-
 @app.get("/", response_class=HTMLResponse)
 def page_accueil():
-    if os.path.exists("static/index.html"):
-        with open("static/index.html", "r", encoding="utf-8") as f:
+    # Le serveur cherche maintenant le fichier index.html directement à la racine
+    if os.path.exists("index.html"):
+        with open("index.html", "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
+            
+    # Si index.html n'existe pas, on tente de servir admin.html pour te dépanner
+    elif os.path.exists("admin.html"):
+        with open("admin.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+            
     return """
     <html>
         <head><title>VéloÉlec & Co</title></head>
         <body style="font-family:sans-serif; text-align:center; padding-top:50px;">
             <h1>⚡ Bienvenue sur VéloÉlec & Co API</h1>
-            <p>Le serveur FastAPI fonctionne correctement. Le fichier index.html est introuvable dans /static.</p>
+            <p>Le serveur FastAPI fonctionne, mais aucun fichier index.html ou admin.html n'a été trouvé à la racine.</p>
         </body>
     </html>
     """
