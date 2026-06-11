@@ -34,12 +34,12 @@
     </div>
 
     <div class="grid" id="catalogue">
-        </div>
+    </div>
 
     <script>
         let tousLesVelos = [];
 
-        // 1. Appel de ton API Render que tu viens de voir à l'écran
+        // 1. Appel de ton API Render pour charger les vélos
         async function chargerCatalogue() {
             try {
                 const response = await fetch('/api/velos');
@@ -50,7 +50,7 @@
             }
         }
 
-        // 2. Affichage des vélos sous forme de cartes élégantes
+        // 2. Affichage des vélos sous forme de cartes élégantes avec bouton d'édition sécurisé
         function afficherVelos(liste) {
             const conteneur = document.getElementById('catalogue');
             conteneur.innerHTML = "";
@@ -61,6 +61,17 @@
             }
 
             liste.forEach(v => {
+                // Encodage des paramètres dans l'URL pour passer proprement les textes à la page d'administration
+                const params = new URLSearchParams({
+                    id: v.id,
+                    nom: v.nom,
+                    prix: v.prix,
+                    moteur: v.moteur || '',
+                    batterie: v.batterie || '',
+                    description_ia: v.description_ia || '',
+                    image_url: v.image_url || ''
+                }).toString();
+
                 conteneur.innerHTML += `
                     <div class="card">
                         <img class="card-img" src="${v.image_url || 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600'}" alt="${v.nom}">
@@ -71,10 +82,13 @@
                                 <div><strong>⚙️ Moteur :</strong> ${v.moteur || 'Non spécifié'}</div>
                                 <div><strong>🔋 Batterie :</strong> ${v.batterie || 'Non spécifié'}</div>
                             </div>
-                            <div class="expert-review">
+                            <div class="expert-review" style="margin-bottom: 15px;">
                                 <strong>📝 L'avis de l'expert :</strong><br>
                                 ${v.description_ia || 'Aucun avis disponible.'}
                             </div>
+                            <a href="/admin.html?${params}" style="display: block; text-align: center; background: #e67e22; color: white; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 14px; margin-top: auto; transition: background 0.2s;">
+                                ✏️ Modifier ce modèle
+                            </a>
                         </div>
                     </div>
                 `;

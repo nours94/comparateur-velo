@@ -86,7 +86,7 @@
         <div class="form-group">
             <label for="id">Identifiant Unique (ID)</label>
             <input type="text" id="id" name="id" placeholder="Ex: rockrider-e-st100" required>
-            <div class="note">Uniquement des lettres minuscules, chiffres et tirets du 6 (-).</div>
+            <div class="note" id="id-note">Uniquement des lettres minuscules, chiffres et tirets du 6 (-).</div>
         </div>
 
         <div class="form-group">
@@ -117,6 +117,45 @@
         <button type="submit" class="btn-submit">🚀 Mettre en ligne instantanément</button>
     </form>
 </div>
+
+<script>
+    // Interception des paramètres d'URL pour le mode "Modification"
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (urlParams.has('id')) {
+            // Modification esthétique du titre et bouton
+            document.querySelector('h1').innerHTML = "⚙️ Modifier le vélo existant";
+            document.querySelector('.btn-submit').innerHTML = "💾 Sauvegarder les modifications";
+            document.querySelector('.btn-submit').style.backgroundColor = '#e67e22';
+            
+            // Verrouillage de l'ID en lecture seule (anti-doublon)
+            const idInput = document.getElementById('id');
+            idInput.value = urlParams.get('id');
+            idInput.setAttribute('readonly', 'true');
+            idInput.style.backgroundColor = '#e8ecef';
+            idInput.style.cursor = 'not-allowed';
+            document.getElementById('id-note').innerHTML = "🔒 Cet ID est verrouillé pour garantir la mise à jour de la bonne fiche.";
+            document.getElementById('id-note').style.color = '#e67e22';
+            
+            // Pré-remplissage des autres données
+            if(urlParams.has('nom')) document.getElementById('nom').value = urlParams.get('nom');
+            if(urlParams.has('prix')) document.getElementById('prix').value = urlParams.get('prix');
+            if(urlParams.has('moteur')) document.getElementById('moteur').value = urlParams.get('moteur');
+            if(urlParams.has('batterie')) document.getElementById('batterie').value = urlParams.get('batterie');
+            if(urlParams.has('description_ia')) document.getElementById('description_ia').value = urlParams.get('description_ia');
+            
+            // Inclusion cachée de l'image existante si elle est présente
+            if (urlParams.has('image_url') && urlParams.get('image_url') !== '') {
+                const imgInput = document.createElement('input');
+                imgInput.type = 'hidden';
+                imgInput.name = 'image_url';
+                imgInput.value = urlParams.get('image_url');
+                document.querySelector('form').appendChild(imgInput);
+            }
+        }
+    });
+</script>
 
 </body>
 </html>
