@@ -2,7 +2,7 @@ import os
 import json
 from fastapi import FastAPI, Depends, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse  # Ajout de FileResponse ici
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, String, Integer, Float
@@ -82,7 +82,7 @@ def init_db():
                 with open("velos.json", "r", encoding="utf-8") as f:
                     liste_velos = json.load(f)
                     
-                    # Boucle magique : importe automatiquement tes 3 ou 500 vélos !
+                    # Boucle magique : importe automatiquement tes vélos !
                     for v in liste_velos:
                         db.add(VeloDB(
                             id=v.get("id"),
@@ -197,3 +197,10 @@ def page_accueil():
         </body>
     </html>
     """
+
+# 🚀 NOUVELLE ROUTE : Affiche proprement le fichier admin.html quand on va sur /admin.html
+@app.get("/admin.html")
+def page_administration():
+    if os.path.exists("admin.html"):
+        return FileResponse("admin.html")
+    raise HTTPException(status_code=404, detail="Le fichier admin.html est introuvable sur le serveur.")
