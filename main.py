@@ -15,7 +15,7 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Table pour les Vélos (Avec le support de la colonne image_url)
+# Table pour les Vélos (Avec support de l'URL de la vraie photo)
 class VeloDB(Base):
     __tablename__ = "velos"
     id = Column(String, primary_key=True, index=True)
@@ -47,7 +47,7 @@ def get_db():
     finally:
         db.close()
 
-# Sécurité pour le robot
+# Sécurité pour les requêtes automatiques du robot
 API_KEY_NAME = "X-Robot-Token"
 ROBOT_TOKEN = "super_secret_token_123"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
@@ -62,66 +62,80 @@ class VeloSchema(BaseModel):
     description_ia: str
     image_url: str = None
 
+# Initialisation de données de test si la base est neuve ou réinitialisée par Render
 @app.on_event("startup")
 def init_db():
     db = SessionLocal()
-    if db.query(VeloDB).count() == 0:
-        db.add_all([
-            VeloDB(
-                id="rockrider-e-st-100", nom="Decathlon Rockrider E-ST 100", prix=999,
-                moteur="Moteur roue arrière 42Nm", batterie="380 Wh",
+    try:
+        if db.query(VeloDB).count() == 0:
+            db.add(VeloDB(
+                id="rockrider-e-st-100", 
+                nom="Decathlon Rockrider E-ST 100", 
+                prix=999,
+                moteur="Moteur roue arrière 42Nm", 
+                batterie="380 Wh",
                 description_ia="Idéal pour débuter le VTT électrique à petit prix. // + Prix très accessible, cadre robuste, position confortable. // - Moteur arrière limité en forte pente, autonomie juste pour les longues sorties.",
                 image_url="https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=600"
-            ),
-            VeloDB(
-                id="nakamura-e-crossover", nom="Intersport Nakamura E-Crossover", prix=1599,
-                moteur="Moteur central Naka Hub One 60Nm", batterie="460 Wh",
+            ))
+            db.add(VeloDB(
+                id="nakamura-e-crossover", 
+                nom="Intersport Nakamura E-Crossover", 
+                prix=1599,
+                moteur="Moteur central Naka Hub One 60Nm", 
+                batterie="460 Wh",
                 description_ia="Le meilleur rapport qualité/prix urbain actuel. // + Moteur central coupleux (60Nm), équipement complet, bonne autonomie. // - Esthétique un peu classique, poids important.",
                 image_url="https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600"
-            )
-        ])
-        db.commit()
-    if db.query(ReparateurDB).count() == 0:
-        db.add_all([
-            ReparateurDB(
-                id="repar-elec-paris", nom="Atelier Cyclo Élec Paris", ville="Paris",
-                adresse="15 Rue de Rivoli, 75001 Paris", telephone="01 42 33 44 55", note=4.8, tarif_horaire=65,
+            ))
+            db.commit()
+            
+        if db.query(ReparateurDB).count() == 0:
+            db.add(ReparateurDB(
+                id="repar-elec-paris", 
+                nom="Atelier Cyclo Élec Paris", 
+                ville="Paris",
+                adresse="15 Rue de Rivoli, 75001 Paris", 
+                telephone="01 42 33 44 55", 
+                note=4.8, 
+                tarif_horaire=65,
                 specialites="Moteurs Bosch, Shimano Steps, Diagnostics batteries, Électricité VAE"
-            )
-        ])
-        db.commit()
-    db.close()
+            ))
+            db.commit()
+    except Exception as e:
+        print(f"Erreur d'initialisation de la BDD : {e}")
+    finally:
+        db.close()
 
 # -------------------------------------------------------------------------
-# ROUTE PRINCIPALE PUBLIC
+# ROUTE PRINCIPALE PUBLIQUE
 # -------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def home(db: Session = Depends(get_db)):
     velos = db.query(VeloDB).all()
     reparateurs = db.query(ReparateurDB).all()
     
-    # 1. Génération des cartes de vélos
+    # 1. Construction des cartes HTML pour les Vélos
     cartes_velos = ""
-    for velo in velos:
-        blocs = velo.description_ia.split("//")
-        avis_general = blocs[0].strip()
-        points_forts_html = ""
-        points_faibles_html = ""
-        
-        for bloc in blocs[1:]:
-            texte_bloc = bloc.strip()
-            if texte_bloc.startswith("+"):
-                elements = texte_bloc.replace("+", "").split(",")
-                for el in elements:
-                    if el.strip(): points_forts_html += f"<li>🟢 {el.strip()}</li>"
-            elif texte_bloc.startswith("-"):
-                elements = texte_bloc.replace("-", "").split(",")
-                for el in elements:
-                    if el.strip(): points_faibles_html += f"<li>🔴 {el.strip()}</li>"
+    if not velos:
+        cartes_velos = "<p style='grid-column: 1/-1; text-align: center; color: #7f8c8d; padding: 40px;'>Aucun vélo dans la base de données. Utilisez le robot ou l'espace Admin pour en ajouter !</p>"
+    else:
+        for velo in velos:
+            desc = velo.description_ia if velo.description_ia else "Aucune description disponible. // +"
+            blocs = desc.split("//")
+            avis_general = blocs[0].strip()
+            points_forts_html = ""
+            points_faibles_html = ""
+            
+            for bloc in blocs[1:]:
+                texte_bloc = bloc.strip()
+                if texte_bloc.startswith("+"):
+                    elements = texte_bloc.replace("+", "").split(",")
+                    for el in elements:
+                        if el.strip(): points_forts_html += f"<li>🟢 {el.strip()}</li>"
+                elif texte_bloc.startswith("-"):
+                    elements = texte_bloc.replace("-", "").split(",")
+                    for el in elements:
+                        if el.strip(): points_faibles_html += f"<li>🔴 {el.strip()}</li>"
 
-        if not points_forts_html and not points_faibles_html:
-            pros_cons_section = f"<p class='review-text'>{velo.description_ia}</p>"
-        else:
             pros_cons_section = f"""
             <p class='review-text'>{avis_general}</p>
             <div class="pros-cons-container">
@@ -129,49 +143,51 @@ async def home(db: Session = Depends(get_db)):
                 {f'<ul class="cons-list">{points_faibles_html}</ul>' if points_faibles_html else ''}
             </div>
             """
-            
-        # Image récupérée par le robot ou l'admin (avec secours)
-        img_src = velo.image_url if velo.image_url else "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600"
+                
+            img_src = velo.image_url if velo.image_url else "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600"
 
-        cartes_velos += f"""
-        <div class="velo-card" data-prix="{velo.prix}" data-nom="{velo.nom.lower()}" data-moteur="{velo.moteur.lower() if velo.moteur else ''}">
-            <div class="card-img-container">
-                <img src="{img_src}" alt="{velo.nom}" loading="lazy">
+            cartes_velos += f"""
+            <div class="velo-card" data-prix="{velo.prix}" data-nom="{velo.nom.lower()}" data-moteur="{velo.moteur.lower() if velo.moteur else ''}">
+                <div class="card-img-container" style="margin: -25px -25px 20px -25px; height: 200px; overflow: hidden; background: white; border-bottom: 1px solid #edf2f7;">
+                    <img src="{img_src}" alt="{velo.nom}" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+                <div class="card-header">
+                    <span class="card-icon">🚲</span>
+                    <h2 class="card-title">{velo.nom}</h2>
+                </div>
+                <div class="price-tag">{velo.prix} €</div>
+                <div class="card-specs">
+                    <div class="spec-item"><span class="spec-icon">⚡</span><div><strong>Moteur</strong><p>{velo.moteur or 'Non spécifié'}</p></div></div>
+                    <div class="spec-item"><span class="spec-icon">🔋</span><div><strong>Batterie</strong><p>{velo.batterie or 'Non spécifié'}</p></div></div>
+                </div>
+                <div class="card-review"><strong>📋 L'avis de l'expert :</strong>{pros_cons_section}</div>
             </div>
-            <div class="card-header">
-                <span class="card-icon">🚲</span>
-                <h2 class="card-title">{velo.nom}</h2>
-            </div>
-            <div class="price-tag">{velo.prix} €</div>
-            <div class="card-specs">
-                <div class="spec-item"><span class="spec-icon">⚡</span><div><strong>Moteur</strong><p>{velo.moteur or 'Non spécifié'}</p></div></div>
-                <div class="spec-item"><span class="spec-icon">🔋</span><div><strong>Batterie</strong><p>{velo.batterie or 'Non spécifié'}</p></div></div>
-            </div>
-            <div class="card-review"><strong>📋 L'avis de l'expert :</strong>{pros_cons_section}</div>
-        </div>
-        """
+            """
 
-    # 2. Génération des cartes de réparateurs
+    # 2. Construction des cartes HTML pour les Réparateurs
     cartes_reparateurs = ""
-    for rep in reparateurs:
-        cartes_reparateurs += f"""
-        <div class="reparateur-card" data-ville="{rep.ville.lower()}" data-nom="{rep.nom.lower()}" data-tarif="{rep.tarif_horaire or 0}">
-            <div class="card-header">
-                <span class="card-icon">🔧</span>
-                <h2 class="card-title">{rep.nom}</h2>
+    if not reparateurs:
+        cartes_reparateurs = "<p style='grid-column: 1/-1; text-align: center; color: #7f8c8d; padding: 40px;'>Aucun réparateur répertorié pour le moment.</p>"
+    else:
+        for rep in reparateurs:
+            cartes_reparateurs += f"""
+            <div class="reparateur-card" data-ville="{rep.ville.lower()}" data-nom="{rep.nom.lower()}" data-tarif="{rep.tarif_horaire or 0}">
+                <div class="card-header">
+                    <span class="card-icon">🔧</span>
+                    <h2 class="card-title">{rep.nom}</h2>
+                </div>
+                <div class="price-tag status-blue">{rep.tarif_horaire if rep.tarif_horaire else '--'} €/h</div>
+                <div class="rating-tag">⭐ {rep.note} / 5</div>
+                <div class="card-specs" style="background: #fdf6ec;">
+                    <div class="spec-item"><span class="spec-icon">📍</span><div><strong>Localisation</strong><p>{rep.adresse} ({rep.ville})</p></div></div>
+                    <div class="spec-item"><span class="spec-icon">📞</span><div><strong>Contact</strong><p>{rep.telephone if rep.telephone else 'Non renseigné'}</p></div></div>
+                </div>
+                <div class="card-review" style="border-top: 1px dashed #e2e8f0;">
+                    <strong>🛠️ Spécialités :</strong>
+                    <p style="font-size: 14px; color: #555; margin: 5px 0 0 0; line-height: 1.4;">{rep.specialites or ''}</p>
+                </div>
             </div>
-            <div class="price-tag status-blue">{rep.tarif_horaire if rep.tarif_horaire else '--'} €/h</div>
-            <div class="rating-tag">⭐ {rep.note} / 5</div>
-            <div class="card-specs" style="background: #fdf6ec;">
-                <div class="spec-item"><span class="spec-icon">📍</span><div><strong>Localisation</strong><p>{rep.adresse} ({rep.ville})</p></div></div>
-                <div class="spec-item"><span class="spec-icon">📞</span><div><strong>Contact</strong><p>{rep.telephone if rep.telephone else 'Non renseigné'}</p></div></div>
-            </div>
-            <div class="card-review" style="border-top: 1px dashed #e67e22;">
-                <strong>🛠️ Spécialités :</strong>
-                <p style="font-size: 14px; color: #555; margin: 5px 0 0 0; line-height: 1.4;">{rep.specialites or ''}</p>
-            </div>
-        </div>
-        """
+            """
         
     return f"""
     <!DOCTYPE html>
@@ -205,7 +221,6 @@ async def home(db: Session = Depends(get_db)):
             .velo-card, .reparateur-card {{ background: var(--card-bg); border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 25px; display: flex; flex-direction: column; transition: all 0.3s; border: 1px solid rgba(0,0,0,0.02); overflow: hidden; }}
             .velo-card:hover, .reparateur-card:hover {{ transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }}
             
-            .card-img-container {{ margin: -25px -25px 20px -25px; height: 200px; overflow: hidden; background-color: white; position: relative; border-bottom: 1px solid #edf2f7; }}
             .card-img-container img {{ width: 100%; height: 100%; object-fit: contain; transition: transform 0.5s; }}
             .velo-card:hover .card-img-container img {{ transform: scale(1.03); }}
 
@@ -278,7 +293,9 @@ async def home(db: Session = Depends(get_db)):
                 const cartes = Array.from(grid.getElementsByClassName('velo-card'));
                 
                 cartes.forEach(c => {{
-                    const matchTxt = c.getAttribute('data-nom').includes(txt) || c.getAttribute('data-moteur').includes(txt);
+                    const nomAttr = c.getAttribute('data-nom') || '';
+                    const motAttr = c.getAttribute('data-moteur') || '';
+                    const matchTxt = nomAttr.includes(txt) || motAttr.includes(txt);
                     const matchPrix = parseFloat(c.getAttribute('data-prix')) <= budget;
                     c.style.display = (matchTxt && matchPrix) ? "flex" : "none";
                 }});
@@ -291,7 +308,9 @@ async def home(db: Session = Depends(get_db)):
                 const cartes = Array.from(grid.getElementsByClassName('reparateur-card'));
                 
                 cartes.forEach(c => {{
-                    const matchTxt = c.getAttribute('data-nom').includes(txt) || c.getAttribute('data-ville').includes(txt);
+                    const nomAttr = c.getAttribute('data-nom') || '';
+                    const vilAttr = c.getAttribute('data-ville') || '';
+                    const matchTxt = nomAttr.includes(txt) || vilAttr.includes(txt);
                     const tarif = parseFloat(c.getAttribute('data-tarif'));
                     c.style.display = (matchTxt && (tarif === 0 || tarif <= tarifMax)) ? "flex" : "none";
                 }});
@@ -301,7 +320,9 @@ async def home(db: Session = Depends(get_db)):
     </html>
     """
 
-# API Synchronisation (Utilisée par le Robot et par le Formulaire d'Admin)
+# -------------------------------------------------------------------------
+# API SYNCHRONISATION (Post de l'Admin ou requêtes JSON du Robot)
+# -------------------------------------------------------------------------
 @app.post("/api/ajouter-velo", status_code=status.HTTP_201_CREATED)
 async def ajouter_velo(
     db: Session = Depends(get_db),
@@ -320,17 +341,23 @@ async def ajouter_velo(
 
     existe = db.query(VeloDB).filter(VeloDB.id == id_f).first()
     if existe:
-        existe.nom, existe.prix, existe.moteur, existe.batterie, existe.description_ia = nom_f, prix_f, moteur_f, bat_f, desc_f
-        if img_f: existe.image_url = img_f
+        existe.nom = nom_f
+        existe.prix = prix_f
+        existe.moteur = moteur_f
+        existe.batterie = bat_f
+        existe.description_ia = desc_f
+        if img_f: 
+            existe.image_url = img_f
     else:
         db.add(VeloDB(id=id_f, nom=nom_f, prix=prix_f, moteur=moteur_f, batterie=bat_f, description_ia=desc_f, image_url=img_f))
     
     db.commit()
-    if est_form: return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    return {"message": "Mis à jour avec succès"}
+    if est_form: 
+        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return {"message": "Données enregistrées avec succès"}
 
 # -------------------------------------------------------------------------
-# ESPACE ADMIN
+# ESPACE DASHBOARD ADMIN
 # -------------------------------------------------------------------------
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard():
@@ -347,11 +374,11 @@ async def admin_dashboard():
                 <form action="/api/ajouter-velo" method="POST">
                     <input type="hidden" name="robot_token_form" value="{ROBOT_TOKEN}">
                     
-                    <label>ID unique du vélo (ex: decathlon-rockrider-e-expl-520-s)</label>
+                    <label>ID unique du vélo (ex: decathlon-rockrider-e-st-100 pour modifier l'existant)</label>
                     <input type="text" name="id" placeholder="ID pour écraser ou nouveau à créer" required>
                     
                     <label>Nom complet</label>
-                    <input type="text" name="nom" placeholder="Ex: Decathlon Rockrider E-EXPL 520 S" required>
+                    <input type="text" name="nom" placeholder="Ex: Decathlon Rockrider E-ST 100" required>
                     
                     <label>Prix (€)</label>
                     <input type="number" name="prix" required>
@@ -365,7 +392,7 @@ async def admin_dashboard():
                     <label>Lien URL de la vraie Photo (Copier/Coller)</label>
                     <input type="text" name="image_url" placeholder="https://site.com/photo.jpg">
                     
-                    <label>Avis IA (Respecter le format // + et // -)</label>
+                    <label>Avis IA (Respecter le format : Intro. // + Avantages // - Inconvénients)</label>
                     <textarea name="description_ia" rows="5" required></textarea>
                     
                     <button type="submit">🚀 Enregistrer le vélo</button>
