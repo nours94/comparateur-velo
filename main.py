@@ -1,5 +1,6 @@
 import os
 import json
+import urllib.parse
 from fastapi import FastAPI, Depends, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
@@ -8,20 +9,23 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
 # -------------------------------------------------------------------------
-# CONFIGURATION BDD (Connexion Supabase PostgreSQL nettoyée du pgbouncer)
+# CONFIGURATION BDD (Connexion Supabase PostgreSQL avec encodage automatique)
 # -------------------------------------------------------------------------
 # 1. On tente d'abord de récupérer la variable configurée sur Render
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# 2. Si Render ne la fournit pas (test en local), on reconstruit l'URL proprement.
+# 2. Si Render ne la fournit pas (test en local), on la construit proprement.
+# On utilise quote_plus pour sécuriser automatiquement le $$ et le ** du mot de passe !
 if not DATABASE_URL:
-    DATABASE_URL = "postgresql://postgres.ekysiizbxuvhcvugdrtp:%24%24Batman1966%2A%2A@aws-1-eu-north-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+    password_brut = "$$Batman1966**"
+    password_securise = urllib.parse.quote_plus(password_brut)
+    DATABASE_URL = f"postgresql://postgres.ekysiizbxuvhcvugdrtp:{password_securise}@aws-1-eu-north-1.pooler.supabase.com:6543/postgres"
 
 # 3. Sécurité obligatoire pour SQLAlchemy : convertit "postgres://" en "postgresql://"
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# 4. FIX : Supprime le paramètre pgbouncer qui fait planter psycopg2
+# 4. Nettoyage du paramètre pgbouncer qui fait planter psycopg2
 if "?pgbouncer=true" in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("?pgbouncer=true", "")
 elif "&pgbouncer=true" in DATABASE_URL:
@@ -145,7 +149,7 @@ def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
 # -------------------------------------------------------------------------
 @app.post("/api/ajouter-velo")
 def ajouter_nouveau_velo(
-    id: str = Form(...),  # Reçoit l'ID depuis le champ 'id' du formulaire admin.html
+    id: str = Form(...),
     nom: str = Form(...),
     prix: int = Form(0),
     moteur: str = Form(None),
@@ -158,7 +162,6 @@ def ajouter_nouveau_velo(
     if robot_token_form != ROBOT_TOKEN:
         raise HTTPException(status_code=403, detail="Accès refusé : Token invalide.")
     
-    # Vérifie si le vélo existe déjà sous cet identifiant dans Supabase
     velo_existant = db.query(VeloDB).filter(VeloDB.identifiant == id).first()
     if velo_existant:
         raise HTTPException(status_code=400, detail="Ce vélo existe déjà. Utilisez le mode modification.")
@@ -176,7 +179,7 @@ def ajouter_nouveau_velo(
 # -------------------------------------------------------------------------
 @app.post("/api/modifier-velo")
 def modifier_velo_existant(
-    id: str = Form(...),  # Reçoit l'ID depuis le champ 'id' du formulaire admin.html
+    id: str = Form(...),
     nom: str = Form(...),
     prix: int = Form(0),
     moteur: str = Form(None),
@@ -189,13 +192,11 @@ def modifier_velo_existant(
     if robot_token_form != ROBOT_TOKEN:
         raise HTTPException(status_code=403, detail="Accès refusé : Token invalide.")
     
-    # Recherche filtrée par la colonne 'identifiant' de Supabase
     velo = db.query(VeloDB).filter(VeloDB.identifiant == id).first()
     
     if not velo:
         raise HTTPException(status_code=404, detail="Désolé, ce vélo n'existe pas dans Supabase.")
     
-    # Mise à jour des valeurs
     velo.nom = nom
     velo.prix = prix
     velo.moteur = moteur
