@@ -8,14 +8,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
 # -------------------------------------------------------------------------
-# CONFIGURATION BDD (Connexion Supabase PostgreSQL avec ton mot de passe)
+# CONFIGURATION BDD (Connexion Supabase PostgreSQL avec mot de passe encodé)
 # -------------------------------------------------------------------------
 # 1. On tente d'abord de récupérer la variable configurée sur Render
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# 2. Si Render ne la fournit pas (test en local), on reconstruit l'URL avec ton mot de passe
+# 2. Si Render ne la fournit pas (test en local), on reconstruit l'URL proprement.
+# Note : Les symboles $ et * de ton mot de passe sont remplacés par %24 et %2A pour éviter le plantage
 if not DATABASE_URL:
-    DATABASE_URL = "postgresql://postgres.ekysiizbxuvhcvugdrtp:$$Batman1966**@aws-1-eu-north-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+    DATABASE_URL = "postgresql://postgres.ekysiizbxuvhcvugdrtp:%24%24Batman1966%2A%2A@aws-1-eu-north-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 
 # 3. Sécurité obligatoire pour SQLAlchemy : convertit "postgres://" en "postgresql://"
 if DATABASE_URL.startswith("postgres://"):
