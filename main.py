@@ -17,7 +17,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 # 2. Si Render ne la fournit pas (test en local), on la construit proprement.
 # On utilise quote_plus pour sécuriser automatiquement le $$ et le ** du mot de passe !
 if not DATABASE_URL:
-    password_brut = "$$Batman1966**"
+    password_brut = "+Batman1966Render"
     password_securise = urllib.parse.quote_plus(password_brut)
     DATABASE_URL = f"postgresql://postgres.ekysiizbxuvhcvugdrtp:{password_securise}@aws-1-eu-north-1.pooler.supabase.com:6543/postgres"
 
