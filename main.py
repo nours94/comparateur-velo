@@ -2,30 +2,41 @@ import os
 import json
 from fastapi import FastAPI, Depends, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse  # Ajout de FileResponse ici
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, String, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
 # -------------------------------------------------------------------------
-# CONFIGURATION BDD (SQLite Local & Éphémère pour Render Gratuit)
+# CONFIGURATION DE LA BASE DE DONNÉES (Connexion Supabase PostgreSQL)
 # -------------------------------------------------------------------------
-DATABASE_URL = "sqlite:///./velos.db"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# Récupération de l'URL de connexion Supabase fournie par l'environnement de Render
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Sécurité pour Render : s'assure que le préfixe postgresql:// est correct
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Si l'URL n'est pas définie (ex: en local sur ton PC), on bascule temporairement sur SQLite
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///./velos.db"
+
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Token de sécurité pour bloquer les robots inconnus
+# Token de sécurité secret pour valider les envois du formulaire admin
 ROBOT_TOKEN = os.getenv("ROBOT_TOKEN", "super_secret_token_123")
 
 # -------------------------------------------------------------------------
-# MODÈLES DE LA BASE DE DONNÉES (SQLAlchemy)
+# MODÈLES DE LA BASE DE DONNÉES (SQLAlchemy aligné sur Supabase)
 # -------------------------------------------------------------------------
 class VeloDB(Base):
-    __tablename__ = "velos"
-    id = Column(String, primary_key=True, index=True)
+    __tablename__ = "vélo"  # Cible précisément le nom de ta table Supabase
+    
+    # Alignement complet sur les colonnes de ton tableau de bord Supabase
+    identifiant = Column(String, primary_key=True, index=True)
     nom = Column(String, nullable=False)
     prix = Column(Integer, default=0)
     moteur = Column(String, nullable=True)
@@ -44,13 +55,13 @@ class ReparateurDB(Base):
     tarif_horaire = Column(Integer, default=50)
     specialites = Column(String, nullable=True)
 
-# Création des tables si elles n'existent pas
+# Création automatique des tables si elles n'existent pas encore
 Base.metadata.create_all(bind=engine)
 
 # -------------------------------------------------------------------------
-# INITIALISATION FASTAPI
+# INITIALISATION FASTAPI & CONFIGURATION CORS
 # -------------------------------------------------------------------------
-app = FastAPI(title="VéloÉlec & Co - Comparateur")
+app = FastAPI(title="VéloÉlec & Co - Comparateur Supabase")
 
 app.add_middleware(
     CORSMiddleware,
@@ -60,7 +71,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Dépendance pour ouvrir/fermer la session de BDD à chaque requête
+# Fonction utilitaire pour injecter la connexion BDD dans chaque route
 def get_db():
     db = SessionLocal()
     try:
@@ -69,23 +80,20 @@ def get_db():
         db.close()
 
 # -------------------------------------------------------------------------
-# CHARGEMENT AUTOMATIQUE DU CATALOGUE (Au démarrage du site)
+# CHARGEMENT AUTOMATIQUE / INITIALISATION (Startup)
 # -------------------------------------------------------------------------
 @app.on_event("startup")
 def init_db():
     db = SessionLocal()
     try:
-        # Si la base est neuve (ou réinitialisée par le reboot de Render)
+        # Initialisation facultative des vélos si la table Supabase venait à être vide
         if db.query(VeloDB).count() == 0:
-            # On vérifie si ton fichier de sauvegarde JSON existe
             if os.path.exists("velos.json"):
                 with open("velos.json", "r", encoding="utf-8") as f:
                     liste_velos = json.load(f)
-                    
-                    # Boucle magique : importe automatiquement tes vélos !
                     for v in liste_velos:
                         db.add(VeloDB(
-                            id=v.get("id"),
+                            identifiant=v.get("id"), # s'assure d'écrire dans la colonne identifiant
                             nom=v.get("nom"),
                             prix=v.get("prix", 0),
                             moteur=v.get("moteur"),
@@ -94,11 +102,8 @@ def init_db():
                             image_url=v.get("image_url")
                         ))
                 db.commit()
-                print(f"✅ {len(liste_velos)} vélos injectés avec succès depuis le fichier JSON !")
-            else:
-                print("ℹ️ Aucun fichier velos.json détecté. Base initialisée vide.")
+                print(f"✅ {len(liste_velos)} vélos injectés dans Supabase.")
             
-        # Initialisation par défaut d'un réparateur si la table est vide
         if db.query(ReparateurDB).count() == 0:
             db.add(ReparateurDB(
                 id="repar-elec-paris", 
@@ -108,33 +113,33 @@ def init_db():
                 telephone="01 42 33 44 55", 
                 note=4.8, 
                 tarif_horaire=65,
-                specialites="Moteurs Bosch, Shimano Steps, Diagnostics batteries"
+                specialites="Moteurs Bosch, Shimano Steps"
             ))
             db.commit()
-            print("✅ Réparateur par défaut ajouté.")
+            print("✅ Réparateur par défaut configuré.")
             
     except Exception as e:
-        print(f"❌ Erreur lors de l'initialisation de la BDD : {e}")
+        print(f"❌ Erreur lors de l'initialisation : {e}")
     finally:
         db.close()
 
 # -------------------------------------------------------------------------
-# ROUTES API : ACCÈS AUX DONNÉES (FRONTEND)
+# ROUTES D'AFFICHAGE PUBLIC (index.html)
 # -------------------------------------------------------------------------
 @app.get("/api/velos")
-def récupérer_tous_les_velos(db: Session = Depends(get_db)):
+def recuperer_tous_les_velos(db: Session = Depends(get_db)):
     return db.query(VeloDB).all()
 
 @app.get("/api/reparateurs")
-def récupérer_tous_les_reparateurs(db: Session = Depends(get_db)):
+def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
     return db.query(ReparateurDB).all()
 
 # -------------------------------------------------------------------------
-# ROUTE API : ENREGISTREMENT ET MISE À JOUR (POUR TES ROBOTS)
+# ROUTE 1 : AJOUT D'UN NOUVEAU VÉLO (Empêche les écrasements accidentels)
 # -------------------------------------------------------------------------
 @app.post("/api/ajouter-velo")
-def ajouter_ou_mettre_a_jour_velo(
-    id: str = Form(...),
+def ajouter_nouveau_velo(
+    identifiant: str = Form(...),
     nom: str = Form(...),
     prix: int = Form(0),
     moteur: str = Form(None),
@@ -144,63 +149,73 @@ def ajouter_ou_mettre_a_jour_velo(
     robot_token_form: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    # Vérification de la clé de sécurité du robot
     if robot_token_form != ROBOT_TOKEN:
-        raise HTTPException(status_code=403, detail="Accès refusé : Token de robot invalide.")
+        raise HTTPException(status_code=403, detail="Accès refusé : Token invalide.")
     
-    # Recherche si le vélo existe déjà en BDD
-    velo_existant = db.query(VeloDB).filter(VeloDB.id == id).first()
-    
+    # Vérifie si le vélo existe déjà sous cet identifiant
+    velo_existant = db.query(VeloDB).filter(VeloDB.identifiant == identifiant).first()
     if velo_existant:
-        # MISE À JOUR : On met à jour uniquement les champs envoyés
-        velo_existant.nom = nom
-        if prix > 0: velo_existant.prix = prix
-        if moteur: velo_existant.moteur = moteur
-        if batterie: velo_existant.batterie = batterie
-        if description_ia: velo_existant.description_ia = description_ia
-        if image_url: velo_existant.image_url = image_url
-        
-        db.commit()
-        return {"status": "success", "message": f"Fiche mise à jour pour : {nom}"}
+        raise HTTPException(status_code=400, detail="Ce vélo existe déjà. Utilisez le mode modification.")
     
-    else:
-        # CRÉATION : Le vélo n'existe pas, on l'ajoute
-        nouveau_velo = VeloDB(
-            id=id, nom=nom, prix=prix, moteur=moteur, 
-            batterie=batterie, description_ia=description_ia, image_url=image_url
-        )
-        db.add(nouveau_velo)
-        db.commit()
-        return {"status": "created", "message": f"Nouveau vélo ajouté avec succès : {nom}"}
-        
+    nouveau_velo = VeloDB(
+        identifiant=identifiant, nom=nom, prix=prix, moteur=moteur, 
+        batterie=batterie, description_ia=description_ia, image_url=image_url
+    )
+    db.add(nouveau_velo)
+    db.commit()
+    return {"status": "created", "message": f"Nouveau vélo '{nom}' ajouté avec succès dans Supabase !"}
+
 # -------------------------------------------------------------------------
-# SERVIR LE FRONTEND (Directement à la racine du projet)
+# ROUTE 2 : MODIFICATION D'UN VÉLO EXISTANT (Celle qui manquait 🛠️)
+# -------------------------------------------------------------------------
+@app.post("/api/modifier-velo")
+def modifier_velo_existant(
+    identifiant: str = Form(...), # Reçoit le champ du formulaire admin
+    nom: str = Form(...),
+    prix: int = Form(0),
+    moteur: str = Form(None),
+    batterie: str = Form(None),
+    description_ia: str = Form(None),
+    image_url: str = Form(None),
+    robot_token_form: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    if robot_token_form != ROBOT_TOKEN:
+        raise HTTPException(status_code=403, detail="Accès refusé : Token invalide.")
+    
+    # RECHERCHE : On filtre via la colonne exacte 'identifiant' de Supabase
+    velo = db.query(VeloDB).filter(VeloDB.identifiant == identifiant).first()
+    
+    if not velo:
+        raise HTTPException(status_code=404, detail="Désolé, ce vélo n'existe pas dans Supabase.")
+    
+    # Application des nouvelles valeurs reçues
+    velo.nom = nom
+    velo.prix = prix
+    velo.moteur = moteur
+    velo.batterie = batterie
+    velo.description_ia = description_ia
+    velo.image_url = image_url  # Sauvegarde ton lien de photo Decathlon
+    
+    db.commit() # Envoi immédiat des modifications sur Supabase
+    return {"status": "success", "message": f"Le vélo '{nom}' a été mis à jour avec succès dans Supabase !"}
+
+# -------------------------------------------------------------------------
+# AFFICHAGE DES PAGES HTML
 # -------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def page_accueil():
-    # Le serveur cherche maintenant le fichier index.html directement à la racine
     if os.path.exists("index.html"):
         with open("index.html", "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-            
-    # Si index.html n'existe pas, on tente de servir admin.html pour te dépanner
     elif os.path.exists("admin.html"):
         with open("admin.html", "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
             
-    return """
-    <html>
-        <head><title>VéloÉlec & Co</title></head>
-        <body style="font-family:sans-serif; text-align:center; padding-top:50px;">
-            <h1>⚡ Bienvenue sur VéloÉlec & Co API</h1>
-            <p>Le serveur FastAPI fonctionne, mais aucun fichier index.html ou admin.html n'a été trouvé à la racine.</p>
-        </body>
-    </html>
-    """
+    return "<h1>⚡ Serveur FastAPI actif (index.html manquant)</h1>"
 
-# 🚀 NOUVELLE ROUTE : Affiche proprement le fichier admin.html quand on va sur /admin.html
 @app.get("/admin.html")
 def page_administration():
     if os.path.exists("admin.html"):
         return FileResponse("admin.html")
-    raise HTTPException(status_code=404, detail="Le fichier admin.html est introuvable sur le serveur.")
+    raise HTTPException(status_code=404, detail="Le fichier admin.html est introuvable.")

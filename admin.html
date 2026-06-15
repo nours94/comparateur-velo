@@ -84,8 +84,8 @@
         <input type="hidden" name="robot_token_form" value="super_secret_token_123">
 
         <div class="form-group">
-            <label for="id">Identifiant Unique (ID)</label>
-            <input type="text" id="id" name="id" placeholder="Ex: rockrider-e-st100" required>
+            <label for="identifiant">Identifiant Unique (ID)</label>
+            <input type="text" id="identifiant" name="identifiant" placeholder="Ex: rockrider-e-st100" required>
             <div class="note" id="id-note">Uniquement des lettres minuscules, chiffres et tirets du 6 (-).</div>
         </div>
 
@@ -129,19 +129,20 @@
         const form = document.getElementById('velo-form');
         const title = document.getElementById('form-title');
         const submitBtn = document.querySelector('.btn-submit');
-        const idInput = document.getElementById('id');
+        const idInput = document.getElementById('identifiant');
         const idNote = document.getElementById('id-note');
         
+        // Si l'URL contient un paramètre id (ex: ?id=rockrider-e-st-100), on passe en mode modification
         if (urlParams.has('id')) {
-            // 1. Changement dynamique de la route de soumission vers la modification
+            // 1. Redirection de la cible du formulaire vers la route de modification
             form.setAttribute('action', '/api/modifier-velo');
             
-            // 2. Modification esthétique du titre et du bouton de validation
+            // 2. Changements visuels pour l'utilisateur
             title.innerHTML = "⚙️ Modifier le vélo existant";
             submitBtn.innerHTML = "💾 Sauvegarder les modifications";
             submitBtn.style.backgroundColor = '#e67e22';
             
-            // 3. Verrouillage de l'ID pour éviter les doublons accidentels dans Supabase
+            // 3. Remplissage et verrouillage du champ Identifiant
             idInput.value = urlParams.get('id');
             idInput.setAttribute('readonly', 'true');
             idInput.style.backgroundColor = '#e8ecef';
@@ -150,7 +151,7 @@
             idNote.innerHTML = "🔒 Cet ID est verrouillé pour garantir la mise à jour de la bonne fiche Supabase.";
             idNote.style.color = '#e67e22';
             
-            // 4. Pré-remplissage des champs avec les données actuelles reçues de l'URL
+            // 4. Pré-remplissage automatique de tous les autres champs depuis l'URL
             if(urlParams.has('nom')) document.getElementById('nom').value = urlParams.get('nom');
             if(urlParams.has('prix')) document.getElementById('prix').value = urlParams.get('prix');
             if(urlParams.has('moteur')) document.getElementById('moteur').value = urlParams.get('moteur');
