@@ -78,9 +78,9 @@
 <body>
 
 <div class="admin-container">
-    <h1>🚲 Ajouter un Vélo manuellement</h1>
+    <h1 id="form-title">🚲 Ajouter un Vélo manuellement</h1>
     
-    <form action="/api/ajouter-velo" method="POST">
+    <form id="velo-form" action="/api/ajouter-velo" method="POST">
         <input type="hidden" name="robot_token_form" value="super_secret_token_123">
 
         <div class="form-group">
@@ -124,26 +124,33 @@
 </div>
 
 <script>
-    // Interception des paramètres d'URL pour le mode "Modification"
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
+        const form = document.getElementById('velo-form');
+        const title = document.getElementById('form-title');
+        const submitBtn = document.querySelector('.btn-submit');
+        const idInput = document.getElementById('id');
+        const idNote = document.getElementById('id-note');
         
         if (urlParams.has('id')) {
-            // Modification esthétique du titre et bouton
-            document.querySelector('h1').innerHTML = "⚙️ Modifier le vélo existant";
-            document.querySelector('.btn-submit').innerHTML = "💾 Sauvegarder les modifications";
-            document.querySelector('.btn-submit').style.backgroundColor = '#e67e22';
+            // 1. Changement dynamique de la route de soumission vers la modification
+            form.setAttribute('action', '/api/modifier-velo');
             
-            // Verrouillage de l'ID en lecture seule (anti-doublon)
-            const idInput = document.getElementById('id');
+            // 2. Modification esthétique du titre et du bouton de validation
+            title.innerHTML = "⚙️ Modifier le vélo existant";
+            submitBtn.innerHTML = "💾 Sauvegarder les modifications";
+            submitBtn.style.backgroundColor = '#e67e22';
+            
+            // 3. Verrouillage de l'ID pour éviter les doublons accidentels dans Supabase
             idInput.value = urlParams.get('id');
             idInput.setAttribute('readonly', 'true');
             idInput.style.backgroundColor = '#e8ecef';
             idInput.style.cursor = 'not-allowed';
-            document.getElementById('id-note').innerHTML = "🔒 Cet ID est verrouillé pour garantir la mise à jour de la bonne fiche.";
-            document.getElementById('id-note').style.color = '#e67e22';
             
-            // Pré-remplissage des données
+            idNote.innerHTML = "🔒 Cet ID est verrouillé pour garantir la mise à jour de la bonne fiche Supabase.";
+            idNote.style.color = '#e67e22';
+            
+            // 4. Pré-remplissage des champs avec les données actuelles reçues de l'URL
             if(urlParams.has('nom')) document.getElementById('nom').value = urlParams.get('nom');
             if(urlParams.has('prix')) document.getElementById('prix').value = urlParams.get('prix');
             if(urlParams.has('moteur')) document.getElementById('moteur').value = urlParams.get('moteur');
