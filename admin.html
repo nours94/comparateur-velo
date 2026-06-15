@@ -83,6 +83,14 @@
         .back-link:hover {
             color: #2c3e50;
         }
+        #message-retour {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+            font-weight: bold;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -90,12 +98,12 @@
 <div class="admin-container">
     <h1 id="form-title">➕ Ajouter un nouveau vélo</h1>
     
-    <form id="velo-form" method="POST" action="/api/ajouter-velo">
+    <form id="velo-form" onsubmit="envoyerFormulaire(event)">
         
         <div class="form-group">
             <label for="id">Identifiant Unique (ID) :</label>
             <input type="text" id="id" name="id" placeholder="ex: specialized-turbo-creo" required>
-            <div id="id-note" class="info-note">Cet identifiant sert de clé primaire dans Supabase. Il ne doit pas contenir d'espaces (utilisez des tirets).</div>
+            <div id="id-note" class="info-note">Cet identifiant sert de clé primaire. Il ne doit pas contenir d'espaces (utilisez des tirets).</div>
         </div>
 
         <div class="form-group">
@@ -120,7 +128,7 @@
 
         <div class="form-group">
             <label for="description_ia">Analyse & Description (IA) :</label>
-            <textarea id="description_ia" name="description_ia" placeholder="Points forts, autonomie estimée, comportement routier..."></textarea>
+            <textarea id="description_ia" name="description_ia" placeholder="Points forts, autonomie estimée..."></textarea>
         </div>
 
         <div class="form-group">
@@ -130,48 +138,112 @@
 
         <div class="form-group">
             <label for="robot_token_form">Clé Secrète de Sécurité (ROBOT_TOKEN) :</label>
-            <input type="text" id="robot_token_form" name="robot_token_form" placeholder="Entrez le token configuré pour valider l'accès" required>
-            <div class="info-note">Requis pour authentifier que vous êtes bien l'administrateur du site.</div>
+            <input type="text" id="robot_token_form" name="robot_token_form" placeholder="Entrez le token configuré" required>
         </div>
 
         <button type="submit" id="submit-btn" class="btn-submit">🚀 Ajouter au catalogue</button>
     </form>
 
+    <div id="message-retour"></div>
+
     <a href="/" class="back-link">⬅️ Retourner à l'accueil du comparateur</a>
 </div>
 
 <script>
-    // Détection automatique du mode (Ajout ou Modification) selon l'URL
     const urlParams = new URLSearchParams(window.location.search);
-    const form = document.getElementById('velo-form');
     const title = document.getElementById('form-title');
     const submitBtn = document.getElementById('submit-btn');
     const idInput = document.getElementById('id');
     const idNote = document.getElementById('id-note');
 
+    // Détermination de l'endpoint cible par défaut
+    let endpointCible = "/api/ajouter-velo";
+
     if (urlParams.has('id')) {
-        // Mode Modification détecté
-        form.action = "/api/modifier-velo";
+        // Mode Modification activé
+        endpointCible = "/api/modifier-velo";
         title.innerHTML = "⚙️ Modifier le vélo existant";
         submitBtn.innerHTML = "💾 Sauvegarder les modifications";
         submitBtn.style.backgroundColor = '#e67e22';
         
-        // Remplissage et verrouillage de l'ID en lecture seule
+        // On remplit et on passe en readonly total
         idInput.value = urlParams.get('id');
-        idInput.setAttribute('readonly', 'true');
+        idInput.readOnly = true;
         idInput.style.backgroundColor = '#e8ecef';
         idInput.style.cursor = 'not-allowed';
         
-        idNote.innerHTML = "🔒 Cet ID est verrouillé en lecture seule pour assurer la mise à jour de la bonne fiche Supabase.";
+        idNote.innerHTML = "🔒 Cet ID est verrouillé pour mettre à jour la bonne fiche dans la base de données.";
         idNote.style.color = '#e67e22';
         
-        // Pré-remplissage des autres champs avec les valeurs actuelles reçues dans l'URL
+        // Pré-remplissage automatique des données depuis les paramètres URL
         if(urlParams.has('nom')) document.getElementById('nom').value = urlParams.get('nom');
         if(urlParams.has('prix')) document.getElementById('prix').value = urlParams.get('prix');
         if(urlParams.has('moteur')) document.getElementById('moteur').value = urlParams.get('moteur');
         if(urlParams.has('batterie')) document.getElementById('batterie').value = urlParams.get('batterie');
         if(urlParams.has('description_ia')) document.getElementById('description_ia').value = urlParams.get('description_ia');
         if(urlParams.has('image_url')) document.getElementById('image_url').value = urlParams.get('image_url');
+    }
+
+    // Gestion de l'envoi via JavaScript (Fetch) pour s'assurer que TOUS les champs partent
+    async function envoyerFormulaire(event) {
+        event.preventDefault(); // Bloque le rechargement brut de la page HTML
+        
+        const msgDiv = document.getElementById('message-retour');
+        msgDiv.style.display = 'none';
+
+        // Capturer les données en ignorant les contraintes de blocage du navigateur
+        const formData = new FormData();
+        formData.append('id', idInput.value); // On force la récupération de la valeur de l'ID ici !
+        formData.append('nom', document.getElementById('nom').value);
+        formData.append('prix', document.getElementById('prix').value);
+        formData.append('moteur', document.getElementById('moteur').value);
+        formData.append('batterie', document.getElementById('batterie').value);
+        formData.append('description_ia', document.getElementById('description_ia').value);
+        formData.append('image_url', document.getElementById('image_url').value);
+        formData.append('robot_token_form', document.getElementById('robot_token_form').value);
+
+        try {
+            const response = await fetch(endpointCible, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                msgDiv.style.backgroundColor = '#d4edda';
+                msgDiv.style.color = '#155724';
+                msgDiv.innerHTML = data.message || "Opération réussie ! 🎉";
+                msgDiv.style.display = 'block';
+                
+                // Si c'était un ajout, on vide le formulaire (sauf le token)
+                if (endpointCible === "/api/ajouter-velo") {
+                    document.getElementById('id').value = '';
+                    document.getElementById('nom').value = '';
+                    document.getElementById('prix').value = '';
+                    document.getElementById('moteur').value = '';
+                    document.getElementById('batterie').value = '';
+                    document.getElementById('description_ia').value = '';
+                    document.getElementById('image_url').value = '';
+                }
+            } else {
+                // Gestion fine des erreurs FastAPI reçues
+                msgDiv.style.backgroundColor = '#f8d7da';
+                msgDiv.style.color = '#721c24';
+                
+                if (data.detail && typeof data.detail === 'object') {
+                    msgDiv.innerHTML = "❌ Erreur de validation : " + JSON.stringify(data.detail);
+                } else {
+                    msgDiv.innerHTML = "❌ Erreur : " + (data.detail || "Une erreur est survenue.");
+                }
+                msgDiv.style.display = 'block';
+            }
+        } catch (error) {
+            msgDiv.style.backgroundColor = '#f8d7da';
+            msgDiv.style.color = '#721c24';
+            msgDiv.innerHTML = "❌ Impossible de joindre le serveur de déploiement.";
+            msgDiv.style.display = 'block';
+        }
     }
 </script>
 
