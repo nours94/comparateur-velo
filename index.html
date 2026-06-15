@@ -12,82 +12,86 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; }
         .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: transform 0.2s; }
         .card:hover { transform: translateY(-5px); }
-        .card-img { width: 100%; height: 220px; object-fit: cover; background-color: #eee; }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
         .card-content { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
-        .card-title { font-size: 18px; font-weight: bold; margin: 0 0 10px 0; }
-        .badge-prix { background: #2ecc71; color: white; padding: 5px 10px; border-radius: 20px; font-weight: bold; display: inline-block; width: fit-content; margin-bottom: 15px; }
-        .specs { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
+        .card-content h3 { margin: 0 0 10px 0; font-size: 18px; color: #2c3e50; }
+        .badge-prix { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold; align-self: flex-start; margin-bottom: 15px; }
+        .specs { font-size: 14px; color: #555; margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; }
         .specs div { margin-bottom: 5px; }
-        .expert-review { border-top: 1px dashed #ddd; padding-top: 15px; font-size: 14px; color: #555; line-height: 1.4; }
+        .expert-review { font-size: 14px; line-height: 1.5; color: #444; background: #eef2f7; padding: 12px; border-radius: 6px; border-left: 4px solid #3498db; }
+        .btn-modifier { display: inline-block; background-color: #e67e22; color: white; text-align: center; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: auto; transition: background 0.2s; font-size: 13px; }
+        .btn-modifier:hover { background-color: #d35400; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>⚡ VéloÉlec & Co</h1>
-        <p>Le catalogue des meilleurs vélos électriques analysés par IA</p>
+        <p>Le comparateur de vélos électriques pensé pour les humains et optimisé pour les IA.</p>
     </div>
 
     <div class="filters">
         <input type="text" id="search" placeholder="🔍 Rechercher un modèle..." oninput="filtrerVelos()">
-        <input type="number" id="budget" placeholder="💰 Budget Max (€)..." oninput="filtrerVelos()">
+        <input type="number" id="budget" placeholder="💰 Budget max (€)" oninput="filtrerVelos()">
     </div>
 
-    <div class="grid" id="catalogue">
-    </div>
+    <div class="grid" id="velos-grid">
+        </div>
 
     <script>
         let tousLesVelos = [];
-        
-        // Sécurité : On vérifie si "?admin=vrai" est présent dans la barre d'adresse
+
+        // Détection automatique du mode admin via l'URL (ex: ?admin=vrai)
         const urlParams = new URLSearchParams(window.location.search);
         const estAdmin = urlParams.get('admin') === 'vrai';
 
-        // 1. Appel de ton API Render pour charger les vélos
+        // 1. Récupération des données depuis l'API FastAPI
         async function chargerCatalogue() {
             try {
+                // Utilisation d'un chemin relatif pour fonctionner en local et sur Render
                 const response = await fetch('/api/velos');
                 tousLesVelos = await response.json();
                 afficherVelos(tousLesVelos);
             } catch (error) {
                 console.error("Erreur lors du chargement des vélos:", error);
+                document.getElementById('velos-grid').innerHTML = "<p style='text-align:center; grid-column:1/-1; color:red;'>Impossible de charger le catalogue pour le moment.</p>";
             }
         }
 
-        // 2. Affichage des vélos sous forme de cartes élégantes
+        // 2. Rendu des cartes sur l'écran
         function afficherVelos(liste) {
-            const conteneur = document.getElementById('catalogue');
-            conteneur.innerHTML = "";
+            const grid = document.getElementById('velos-grid');
+            grid.innerHTML = "";
 
-            if(liste.length === 0) {
-                conteneur.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Aucun vélo ne correspond à vos critères.</p>";
+            if (liste.length === 0) {
+                grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>Aucun vélo ne correspond à vos critères.</p>";
                 return;
             }
 
+            // Nettoyage des anciens scripts de données structurées IA
+            document.querySelectorAll('.schema-ia').forEach(el => el.remove());
+
             liste.forEach(v => {
-                // Encodage complet des paramètres (y compris image_url)
-                const params = new URLSearchParams({
-                    id: v.id,
-                    nom: v.nom,
-                    prix: v.prix,
-                    moteur: v.moteur || '',
-                    batterie: v.batterie || '',
-                    description_ia: v.description_ia || '',
-                    image_url: v.image_url || ''
-                }).toString();
+                // Gestion de la clé : "identifiant" (Supabase) ou "id" (ancien JSON)
+                const veloId = v.identifiant || v.id;
 
-                // Le bouton Modifier ne s'affiche QUE si estAdmin est vrai
-                const boutonModifier = estAdmin ? `
-                    <a href="/admin.html?${params}" style="display: block; text-align: center; background: #e67e22; color: white; text-decoration: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 14px; margin-top: auto; transition: background 0.2s;">
-                        ✏️ Modifier ce modèle
-                    </a>
-                ` : '';
+                // Sécurité : On n'affiche le bouton que si l'utilisateur est connecté en mode admin
+                let boutonModifier = "";
+                if (estAdmin && veloId && v.nom && v.prix) {
+                    boutonModifier = `
+                        <a href="admin.html?id=${encodeURIComponent(veloId)}&nom=${encodeURIComponent(v.nom)}&prix=${v.prix}&moteur=${encodeURIComponent(v.moteur || '')}&batterie=${encodeURIComponent(v.batterie || '')}&description_ia=${encodeURIComponent(v.description_ia || '')}&image_url=${encodeURIComponent(v.image_url || '')}" 
+                           class="btn-modifier">
+                           ✏️ Modifier la fiche
+                        </a>
+                    `;
+                }
 
-                conteneur.innerHTML += `
+                // A. Rendu visuel pour l'Humain
+                grid.innerHTML += `
                     <div class="card">
-                        <img class="card-img" src="${v.image_url || 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600'}" alt="${v.nom}">
+                        <img src="${v.image_url || 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=600'}" alt="${v.nom}">
                         <div class="card-content">
-                            <div class="card-title">${v.nom}</div>
+                            <h3>${v.nom}</h3>
                             <div class="badge-prix">${v.prix} €</div>
                             <div class="specs">
                                 <div><strong>⚙️ Moteur :</strong> ${v.moteur || 'Non spécifié'}</div>
@@ -101,10 +105,38 @@
                         </div>
                     </div>
                 `;
+
+                // B. Rendu sémantique invisible pour l'IA (SEO / GEO pour Gemini)
+                if (veloId && v.nom) {
+                    const schemaData = {
+                        "@context": "https://schema.org/",
+                        "@type": "Product",
+                        "name": v.nom,
+                        "image": v.image_url,
+                        "description": v.description_ia,
+                        "offers": {
+                            "@type": "Offer",
+                            "url": window.location.href,
+                            "priceCurrency": "EUR",
+                            "price": v.prix,
+                            "itemCondition": "https://schema.org/NewCondition",
+                            "availability": "https://schema.org/InStock"
+                        },
+                        "additionalProperty": [
+                            { "@type": "PropertyValue", "name": "Moteur", "value": v.moteur },
+                            { "@type": "PropertyValue", "name": "Batterie", "value": v.batterie }
+                        ]
+                    };
+                    const scriptSchema = document.createElement('script');
+                    scriptSchema.type = 'application/ld+json';
+                    scriptSchema.className = 'schema-ia';
+                    scriptSchema.text = JSON.stringify(schemaData);
+                    document.head.appendChild(scriptSchema);
+                }
             });
         }
 
-        // 3. Gestion des filtres de recherche en temps réel
+        // 3. Gestion de la barre de recherche en temps réel
         function filtrerVelos() {
             const texte = document.getElementById('search').value.toLowerCase();
             const budgetMax = parseFloat(document.getElementById('budget').value) || Infinity;
@@ -118,7 +150,7 @@
             afficherVelos(resultat);
         }
 
-        // Lancement au chargement de la page
+        // Démarrage automatique
         chargerCatalogue();
     </script>
 </body>
