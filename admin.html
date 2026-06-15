@@ -37,21 +37,24 @@
             font-weight: 600;
             color: #34495e;
         }
-        input[type="text"], input[type="number"], textarea {
+        input[type="text"],
+        input[type="number"],
+        textarea {
             width: 100%;
             padding: 10px;
-            border: 1px solid #bdc3c7;
+            border: 1px solid #ccc;
             border-radius: 6px;
             box-sizing: border-box;
             font-size: 14px;
         }
         textarea {
-            height: 120px;
             resize: vertical;
+            height: 100px;
         }
-        input:focus, textarea:focus {
-            border-color: #3498db;
-            outline: none;
+        .info-note {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 4px;
         }
         .btn-submit {
             background-color: #3498db;
@@ -63,103 +66,113 @@
             border-radius: 6px;
             cursor: pointer;
             width: 100%;
+            margin-top: 10px;
             transition: background 0.2s;
         }
         .btn-submit:hover {
             background-color: #2980b9;
         }
-        .note {
-            font-size: 12px;
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
             color: #7f8c8d;
-            margin-top: 5px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover {
+            color: #2c3e50;
         }
     </style>
 </head>
 <body>
 
 <div class="admin-container">
-    <h1 id="form-title">🚲 Ajouter un Vélo manuellement</h1>
+    <h1 id="form-title">➕ Ajouter un nouveau vélo</h1>
     
-    <form id="velo-form" action="/api/ajouter-velo" method="POST">
-        <input type="hidden" name="robot_token_form" value="super_secret_token_123">
-
+    <form id="velo-form" method="POST" action="/api/ajouter-velo">
+        
         <div class="form-group">
-            <label for="identifiant">Identifiant Unique (ID)</label>
-            <input type="text" id="identifiant" name="identifiant" placeholder="Ex: rockrider-e-st100" required>
-            <div class="note" id="id-note">Uniquement des lettres minuscules, chiffres et tirets du 6 (-).</div>
+            <label for="id">Identifiant Unique (ID) :</label>
+            <input type="text" id="id" name="id" placeholder="ex: specialized-turbo-creo" required>
+            <div id="id-note" class="info-note">Cet identifiant sert de clé primaire dans Supabase. Il ne doit pas contenir d'espaces (utilisez des tirets).</div>
         </div>
 
         <div class="form-group">
-            <label for="nom">Nom complet du vélo</label>
-            <input type="text" id="nom" name="nom" placeholder="Ex: Decathlon Rockrider E-ST 100" required>
+            <label for="nom">Nom du Vélo :</label>
+            <input type="text" id="nom" name="nom" placeholder="ex: Turbo Creo 2 Comp" required>
         </div>
 
         <div class="form-group">
-            <label for="prix">Prix indicatif (€)</label>
-            <input type="number" id="prix" name="prix" placeholder="Ex: 899" required>
+            <label for="prix">Prix (€) :</label>
+            <input type="number" id="prix" name="prix" placeholder="ex: 6000" min="0" required>
         </div>
 
         <div class="form-group">
-            <label for="moteur">Caractéristiques du moteur</label>
-            <input type="text" id="moteur" name="moteur" placeholder="Ex: Moteur central Naka E-Power Max, 100 Nm" required>
+            <label for="moteur">Modèle du Moteur :</label>
+            <input type="text" id="moteur" name="moteur" placeholder="ex: Specialized SL 1.2, 50 Nm">
         </div>
 
         <div class="form-group">
-            <label for="batterie">Capacité de la batterie</label>
-            <input type="text" id="batterie" name="batterie" placeholder="Ex: 460 Wh" required>
+            <label for="batterie">Capacité Batterie :</label>
+            <input type="text" id="batterie" name="batterie" placeholder="ex: 320 Wh">
         </div>
 
         <div class="form-group">
-            <label for="description_ia">Avis de l'expert (IA ou Personnel)</label>
-            <textarea id="description_ia" name="description_ia" placeholder="Colle l'avis du robot ou écris ton propre retour d'expérience ici..." required></textarea>
+            <label for="description_ia">Analyse & Description (IA) :</label>
+            <textarea id="description_ia" name="description_ia" placeholder="Points forts, autonomie estimée, comportement routier..."></textarea>
         </div>
 
         <div class="form-group">
-            <label for="image_url">Lien internet de la photo (URL)</label>
-            <input type="text" id="image_url" name="image_url" placeholder="Ex: https://images.unsplash.com/... ou lien Decathlon">
+            <label for="image_url">Lien de l'image (URL) :</label>
+            <input type="text" id="image_url" name="image_url" placeholder="https://exemple.com/image.jpg">
         </div>
 
-        <button type="submit" class="btn-submit">🚀 Mettre en ligne instantanément</button>
+        <div class="form-group">
+            <label for="robot_token_form">Clé Secrète de Sécurité (ROBOT_TOKEN) :</label>
+            <input type="text" id="robot_token_form" name="robot_token_form" placeholder="Entrez le token configuré pour valider l'accès" required>
+            <div class="info-note">Requis pour authentifier que vous êtes bien l'administrateur du site.</div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn-submit">🚀 Ajouter au catalogue</button>
     </form>
+
+    <a href="/" class="back-link">⬅️ Retourner à l'accueil du comparateur</a>
 </div>
 
 <script>
-    window.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const form = document.getElementById('velo-form');
-        const title = document.getElementById('form-title');
-        const submitBtn = document.querySelector('.btn-submit');
-        const idInput = document.getElementById('identifiant');
-        const idNote = document.getElementById('id-note');
+    // Détection automatique du mode (Ajout ou Modification) selon l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const form = document.getElementById('velo-form');
+    const title = document.getElementById('form-title');
+    const submitBtn = document.getElementById('submit-btn');
+    const idInput = document.getElementById('id');
+    const idNote = document.getElementById('id-note');
+
+    if (urlParams.has('id')) {
+        // Mode Modification détecté
+        form.action = "/api/modifier-velo";
+        title.innerHTML = "⚙️ Modifier le vélo existant";
+        submitBtn.innerHTML = "💾 Sauvegarder les modifications";
+        submitBtn.style.backgroundColor = '#e67e22';
         
-        // Si l'URL contient un paramètre id (ex: ?id=rockrider-e-st-100), on passe en mode modification
-        if (urlParams.has('id')) {
-            // 1. Redirection de la cible du formulaire vers la route de modification
-            form.setAttribute('action', '/api/modifier-velo');
-            
-            // 2. Changements visuels pour l'utilisateur
-            title.innerHTML = "⚙️ Modifier le vélo existant";
-            submitBtn.innerHTML = "💾 Sauvegarder les modifications";
-            submitBtn.style.backgroundColor = '#e67e22';
-            
-            // 3. Remplissage et verrouillage du champ Identifiant
-            idInput.value = urlParams.get('id');
-            idInput.setAttribute('readonly', 'true');
-            idInput.style.backgroundColor = '#e8ecef';
-            idInput.style.cursor = 'not-allowed';
-            
-            idNote.innerHTML = "🔒 Cet ID est verrouillé pour garantir la mise à jour de la bonne fiche Supabase.";
-            idNote.style.color = '#e67e22';
-            
-            // 4. Pré-remplissage automatique de tous les autres champs depuis l'URL
-            if(urlParams.has('nom')) document.getElementById('nom').value = urlParams.get('nom');
-            if(urlParams.has('prix')) document.getElementById('prix').value = urlParams.get('prix');
-            if(urlParams.has('moteur')) document.getElementById('moteur').value = urlParams.get('moteur');
-            if(urlParams.has('batterie')) document.getElementById('batterie').value = urlParams.get('batterie');
-            if(urlParams.has('description_ia')) document.getElementById('description_ia').value = urlParams.get('description_ia');
-            if(urlParams.has('image_url')) document.getElementById('image_url').value = urlParams.get('image_url');
-        }
-    });
+        // Remplissage et verrouillage de l'ID en lecture seule
+        idInput.value = urlParams.get('id');
+        idInput.setAttribute('readonly', 'true');
+        idInput.style.backgroundColor = '#e8ecef';
+        idInput.style.cursor = 'not-allowed';
+        
+        idNote.innerHTML = "🔒 Cet ID est verrouillé en lecture seule pour assurer la mise à jour de la bonne fiche Supabase.";
+        idNote.style.color = '#e67e22';
+        
+        // Pré-remplissage des autres champs avec les valeurs actuelles reçues dans l'URL
+        if(urlParams.has('nom')) document.getElementById('nom').value = urlParams.get('nom');
+        if(urlParams.has('prix')) document.getElementById('prix').value = urlParams.get('prix');
+        if(urlParams.has('moteur')) document.getElementById('moteur').value = urlParams.get('moteur');
+        if(urlParams.has('batterie')) document.getElementById('batterie').value = urlParams.get('batterie');
+        if(urlParams.has('description_ia')) document.getElementById('description_ia').value = urlParams.get('description_ia');
+        if(urlParams.has('image_url')) document.getElementById('image_url').value = urlParams.get('image_url');
+    }
 </script>
 
 </body>
