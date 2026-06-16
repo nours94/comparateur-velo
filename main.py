@@ -1,6 +1,5 @@
 import os
 import json
-import urllib.parse
 from fastapi import FastAPI, Depends, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, PlainTextResponse
@@ -9,14 +8,17 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
 # -------------------------------------------------------------------------
-# CONFIGURATION BDD (Connexion Supabase PostgreSQL Forcée et Sécurisée)
+# CONFIGURATION BDD (Lecture dynamique depuis l'environnement Render)
 # -------------------------------------------------------------------------
-# Définition sécurisée du mot de passe avec caractères spéciaux
-mot_de_passe = "$$Batman1966**"
-mdp_encode = urllib.parse.quote_plus(mot_de_passe)
+# Récupération sécurisée de la chaîne de connexion Supabase configurée sur Render
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Utilisation directe du pooler Supabase (port 6543) requis pour Render
-DATABASE_URL = f"postgresql://postgres.ekysiizbxuvhcvugdrtp:{mdp_encode}@aws-1-eu-north-1.pooler.supabase.com:6543/postgres"
+# Sécurité : Si tu as oublié de la configurer sur Render, l'application t'avertira proprement
+if not DATABASE_URL:
+    raise RuntimeError(
+        "Erreur : La variable d'environnement 'DATABASE_URL' est introuvable sur Render. "
+        "Veuillez l'ajouter dans l'onglet 'Environment' de votre dashboard Render."
+    )
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -29,7 +31,7 @@ ROBOT_TOKEN = os.getenv("ROBOT_TOKEN", "super_secret_token_123")
 # MODÈLES DE LA BASE DE DONNÉES (SQLAlchemy)
 # -------------------------------------------------------------------------
 class VeloDB(Base):
-    __tablename__ = "vélo"  # Aligné exactement sur le nom de ta table Supabase
+    __tablename__ = "vélo"  # Doit correspondre exactement au nom de ta table Supabase
     identifiant = Column(String, primary_key=True, index=True)
     nom = Column(String, nullable=False)
     prix = Column(Integer, default=0)
@@ -49,7 +51,7 @@ class ReparateurDB(Base):
     tarif_horaire = Column(Integer, default=50)
     specialites = Column(String, nullable=True)
 
-# Création automatique des tables dans Supabase si manquantes
+# Création automatique des tables dans Supabase si elles n'existent pas
 Base.metadata.create_all(bind=engine)
 
 # -------------------------------------------------------------------------
@@ -65,7 +67,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Injecteur de session BDD pour chaque requête
+# Gestionnaire de sessions de base de données
 def get_db():
     db = SessionLocal()
     try:
@@ -73,7 +75,7 @@ def get_db():
     finally:
         db.close()
 
-# Initialisation automatique du catalogue au démarrage si vide
+# Remplissage initial automatique du catalogue au démarrage de Render (si vide)
 @app.on_event("startup")
 def init_db():
     db = SessionLocal()
@@ -88,14 +90,14 @@ def init_db():
                         description_ia=v.get("description_ia"), image_url=v.get("image_url")
                     ))
             db.commit()
-            print("✅ Initialisation du catalogue vélos réussie.")
+            print("✅ Initialisation réussie : vélos injectés dans Supabase.")
     except Exception as e:
-        print(f"❌ Erreur lors de l'initialisation : {e}")
+        print(f"❌ Erreur lors du peuplement de la base : {e}")
     finally:
         db.close()
 
 # -------------------------------------------------------------------------
-# ROUTES D'AFFICHAGE PUBLIC (API)
+# ROUTES DE L'API PUBLIQUE
 # -------------------------------------------------------------------------
 @app.get("/api/velos")
 def recuperer_tous_les_velos(db: Session = Depends(get_db)):
@@ -106,7 +108,7 @@ def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
     return db.query(ReparateurDB).all()
 
 # -------------------------------------------------------------------------
-# ROUTE ADMINISTRATEUR : AJOUT D'UN VÉLO
+# ROUTE ADMIN : AJOUT D'UN VÉLO
 # -------------------------------------------------------------------------
 @app.post("/api/ajouter-velo")
 def ajouter_nouveau_velo(
@@ -131,7 +133,7 @@ def ajouter_nouveau_velo(
     return {"status": "created", "message": f"Nouveau vélo '{nom}' ajouté avec succès dans Supabase !"}
 
 # -------------------------------------------------------------------------
-# ROUTE ADMINISTRATEUR : MODIFICATION D'UN VÉLO
+# ROUTE ADMIN : MODIFICATION D'UN VÉLO
 # -------------------------------------------------------------------------
 @app.post("/api/modifier-velo")
 def modifier_velo_existant(
@@ -158,14 +160,14 @@ def modifier_velo_existant(
     return {"status": "success", "message": f"Le vélo '{nom}' a été mis à jour avec succès dans Supabase !"}
 
 # -------------------------------------------------------------------------
-# ROUTES D'AFFICHAGE DES PAGES WEB (HTML)
+# INTERFACES FRONT-END (HTML)
 # -------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def page_accueil():
     if os.path.exists("index.html"):
         with open("index.html", "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return "<h1>⚡ Serveur FastAPI actif (index.html manquant)</h1>"
+    return "<h1>⚡ Serveur FastAPI actif (Fichier index.html manquant)</h1>"
 
 @app.get("/admin.html")
 def page_administration():
@@ -174,14 +176,14 @@ def page_administration():
     raise HTTPException(status_code=404, detail="Le fichier admin.html est introuvable.")
 
 # -------------------------------------------------------------------------
-# OPTIMISATION RECHERCHE IA (GEO) : FICHIER ROBOTS.TXT
+# VISIBILITÉ MOTEURS IA (GEO) : CONFIGURATION ROBOTS.TXT
 # -------------------------------------------------------------------------
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
     contenu = (
         "User-agent: *\n"
         "Allow: /\n\n"
-        "# Autoriser explicitement les moteurs d'apprentissage et de recherche IA\n"
+        "# Autoriser explicitement les moteurs d'indexation et de recherche IA\n"
         "User-agent: Google-Extended\n"
         "Allow: /\n\n"
         "User-agent: GPTBot\n"
