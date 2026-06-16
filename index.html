@@ -3,236 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VéloÉlec & Co - Le Meilleur Comparateur de Vélos Électriques</title>
+    <title>VéloÉlec & Co - Trouvez le vélo électrique fait pour vous</title>
     <style>
         :root {
-            --primary: #3498db;
-            --primary-dark: #2980b9;
-            --secondary: #e67e22;
-            --text: #2c3e50;
-            --bg: #f8f9fa;
-            --card-bg: #ffffff;
+            --dark-blue: #111d2c;      /* Le bleu nuit ultra sombre du site */
+            --pink-accent: #d1125b;    /* Le fuchsia/magenta dynamique pour les actions */
+            --pink-hover: #b00b4a;
+            --text-dark: #2c3e50;
+            --text-muted: #64748b;
+            --bg-light: #ffffff;       /* Fond blanc pur épuré */
+            --bg-card: #f8fafc;        /* Gris très léger pour détacher les cartes */
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
             margin: 0;
             padding: 0;
+            /* Style pour les grands titres inspiré du Serif des Voltés */
+            --font-serif: 'Georgia', Cambria, "Times New Roman", Times, serif;
         }
 
-        /* En-tête / Header */
+        /* -------------------------------------------------------------------------
+           NAV BAR / HEADER
+           ------------------------------------------------------------------------- */
         header {
-            background-color: var(--card-bg);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            background-color: var(--bg-light);
+            border-bottom: 1px solid #e2e8f0;
             position: sticky;
             top: 0;
             z-index: 100;
         }
 
         .header-container {
-            max-width: 1200px;
+            max-width: 1140px;
             margin: 0 auto;
-            padding: 15px 20px;
+            padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .logo {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--primary);
-            text-decoration: none;
+        .logo-wrapper {
             display: flex;
             align-items: center;
+            text-decoration: none;
             gap: 10px;
+        }
+
+        /* Simulation graphique du logo avec le cercle jaune et écriture */
+        .logo-circle {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #f1c40f;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+        }
+        .logo-circle::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 3px;
+            background: #f1c40f;
+            top: 12px;
+            left: 20px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--dark-blue);
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            color: var(--pink-accent);
         }
 
         .admin-link {
             background-color: transparent;
-            color: var(--text);
-            border: 1px solid #bdc3c7;
-            padding: 8px 16px;
-            border-radius: 20px;
+            color: var(--dark-blue);
+            border: 1px solid var(--dark-blue);
+            padding: 10px 22px;
+            border-radius: 30px;
             text-decoration: none;
             font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
+            font-weight: 600;
+            transition: all 0.2s ease;
         }
 
         .admin-link:hover {
-            background-color: var(--text);
+            background-color: var(--dark-blue);
             color: white;
-            border-color: var(--text);
         }
 
-        /* Section Filtres & Recherche */
-        .search-section {
-            max-width: 1200px;
-            margin: 30px auto 10px auto;
+        /* -------------------------------------------------------------------------
+           HERO SECTION (Bannière d'accueil)
+           ------------------------------------------------------------------------- */
+        .hero-section {
+            background: linear-gradient(rgba(17, 29, 44, 0.85), rgba(17, 29, 44, 0.95)), 
+                        url('https://images.unsplash.com/photo-1571068316341-2502974b73f5?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+            padding: 90px 20px;
+        }
+
+        .hero-title {
+            font-family: var(--font-serif);
+            font-size: 42px;
+            font-weight: bold;
+            margin: 0 auto 20px auto;
+            max-width: 800px;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: #cbd5e1;
+            margin-bottom: 35px;
+            font-weight: 300;
+        }
+
+        .hero-btn {
+            background-color: var(--pink-accent);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            display: inline-block;
+            transition: background 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hero-btn:hover {
+            background-color: var(--pink-hover);
+        }
+
+        /* -------------------------------------------------------------------------
+           SECTION FILTRES
+           ------------------------------------------------------------------------- */
+        .search-container {
+            max-width: 900px;
+            margin: -40px auto 40px auto; /* Chevauchement élégant sur la bannière */
             padding: 0 20px;
+            position: relative;
+            z-index: 10;
         }
 
-        .filter-wrapper {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        .filter-box {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            align-items: center;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-        }
-
-        .filter-group label {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .filter-group input[type="text"] {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .range-container {
-            display: flex;
-            align-items: center;
             gap: 10px;
         }
 
-        .range-container input[type="range"] {
-            flex: 1;
+        .filter-group label {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--dark-blue);
         }
 
-        /* Grille des Vélos */
+        .filter-group input[type="text"] {
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .filter-group input[type="text"]:focus {
+            border-color: var(--pink-accent);
+        }
+
+        /* -------------------------------------------------------------------------
+           SECTION CONTENU & GRILLE DES VÉLOS
+           ------------------------------------------------------------------------- */
+        .section-title {
+            text-align: center;
+            font-family: var(--font-serif);
+            font-size: 32px;
+            color: var(--dark-blue);
+            margin: 50px 0 30px 0;
+        }
+
         main {
-            max-width: 1200px;
-            margin: 30px auto;
+            max-width: 1140px;
+            margin: 0 auto 80px auto;
             padding: 0 20px;
         }
 
         .velo-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
             gap: 30px;
         }
 
-        /* Carte Vélo (Ergonomie moderne) */
+        /* Cartes vélos épurées type magazine */
         .velo-card {
-            background: var(--card-bg);
-            border-radius: 12px;
+            background: var(--bg-card);
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            transition: transform 0.3s, box-shadow 0.3s;
             display: flex;
             flex-direction: column;
-            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .velo-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.05);
         }
 
-        .velo-image-wrapper {
+        .image-container {
             width: 100%;
-            height: 200px;
-            background-color: #f1f2f6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            height: 230px;
+            background-color: #f1f5f9;
             overflow: hidden;
+            position: relative;
         }
 
-        .velo-image {
+        .velo-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .velo-image-placeholder {
-            font-size: 50px;
-            color: #ccc;
-        }
-
-        .velo-content {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-
-        .velo-title {
-            font-size: 18px;
-            margin: 0 0 10px 0;
-            color: var(--text);
-        }
-
-        .velo-price {
-            font-size: 22px;
+        .velo-badge-price {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: var(--dark-blue);
+            color: white;
+            padding: 6px 14px;
             font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 15px;
-        }
-
-        .velo-specs {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 15px;
-            font-size: 13px;
-        }
-
-        .spec-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: #f1f2f6;
-            padding: 6px 10px;
+            font-size: 16px;
             border-radius: 4px;
         }
 
-        .velo-description {
-            font-size: 14px;
-            line-height: 1.5;
-            color: #7f8c8d;
-            margin-bottom: 20px;
+        .velo-body {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
             flex-grow: 1;
         }
 
-        .btn-edit {
-            background-color: var(--secondary);
-            color: white;
-            text-decoration: none;
-            text-align: center;
-            padding: 10px;
-            border-radius: 6px;
-            font-weight: bold;
+        .velo-name {
+            font-family: var(--font-serif);
+            font-size: 22px;
+            color: var(--dark-blue);
+            margin: 0 0 15px 0;
+        }
+
+        .tech-specs {
+            margin-bottom: 20px;
             font-size: 14px;
-            transition: background 0.2s;
+            color: var(--text-dark);
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
         }
 
-        .btn-edit:hover {
-            background-color: #d35400;
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
         }
 
-        /* Loader */
+        .spec-label {
+            color: var(--text-muted);
+        }
+
+        .spec-value {
+            font-weight: 600;
+        }
+
+        .velo-desc {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-dark);
+            margin: 0 0 25px 0;
+            flex-grow: 1;
+        }
+
+        .action-edit-btn {
+            text-align: center;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .action-edit-btn:hover {
+            border-color: var(--pink-accent);
+            color: var(--pink-accent);
+        }
+
         #loader {
             text-align: center;
-            font-size: 18px;
-            padding: 40px;
-            color: var(--primary);
-            font-weight: bold;
+            font-family: var(--font-serif);
+            font-size: 20px;
+            padding: 60px;
+            color: var(--text-muted);
         }
     </style>
 </head>
@@ -240,136 +333,134 @@
 
     <header>
         <div class="header-container">
-            <a href="/" class="logo">⚡ VéloÉlec & Co</a>
-            <a href="/admin.html" class="admin-link">⚙️ Espace Admin</a>
+            <a href="/" class="logo-wrapper">
+                <div class="logo-circle"></div>
+                <div class="logo-text">les<span>voltés</span></div>
+            </a>
+            <a href="/admin.html" class="admin-link">Espace Admin</a>
         </div>
     </header>
 
-    <section class="search-section">
-        <div class="filter-wrapper">
+    <section class="hero-section">
+        <h1 class="hero-title">Trouvez le vélo électrique fait pour vous, sans vous tromper</h1>
+        <p class="hero-subtitle">Avis clairs, comparatifs fiables, conseils pratiques pour choisir sereinement.</p>
+        <button class="hero-btn" onclick="document.getElementById('search-input').focus();">Trouver mon VAE idéal</button>
+    </section>
+
+    <section class="search-container">
+        <div class="filter-box">
             <div class="filter-group">
-                <label for="search-input">Rechercher un modèle ou un moteur :</label>
-                <input type="text" id="search-input" placeholder="Ex: Rockrider, Bosch..." oninput="filtrerCatalog()">
+                <label for="search-input">Recherche par mot-clé</label>
+                <input type="text" id="search-input" placeholder="Ex: Rockrider, Moteur Bosch..." oninput="filtrerCatalogue()">
             </div>
             <div class="filter-group">
-                <label for="price-range">Prix maximum : <span id="price-val">6000</span> €</label>
-                <div class="range-container">
-                    <input type="range" id="price-range" min="0" max="6000" step="100" value="6000" oninput="filtrerCatalog()">
+                <label for="price-range">Budget Maximal : <span id="price-val">6000</span>€</label>
+                <div style="display:flex; align-items:center; height:100%;">
+                    <input type="range" id="price-range" min="0" max="6000" step="100" value="6000" style="width:100%; accent-color: var(--pink-accent);" oninput="filtrerCatalogue()">
                 </div>
             </div>
         </div>
     </section>
 
+    <h2 class="section-title">Nos VAE du quotidien préférés</h2>
+    
     <main>
-        <div id="loader">🔄 Connexion sécurisée à Supabase et chargement des vélos...</div>
+        <div id="loader">Chargement sécurisé des modèles de vélos...</div>
         <div class="velo-grid" id="velo-container"></div>
     </main>
 
     <div id="seo-ia-structured-data"></div>
 
     <script>
-        let tousLesVelos = []; // Stockage local pour le filtrage en temps réel
+        let listeLocaleVelos = [];
 
-        // 1. Récupération des données depuis l'API FastAPI
-        async function chargerCatalogue() {
+        async function initialiserCatalogue() {
             try {
                 const response = await fetch('/api/velos');
-                tousLesVelos = await response.json();
-                
+                listeLocaleVelos = await response.json();
                 document.getElementById('loader').style.display = 'none';
-                afficherVelos(tousLesVelos);
-            } catch (error) {
-                document.getElementById('loader').innerHTML = "❌ Impossible de charger les données Supabase.";
+                genererCartesHTML(listeLocaleVelos);
+            } catch (err) {
+                document.getElementById('loader').innerText = "Erreur de synchronisation avec Supabase.";
             }
         }
 
-        // 2. Affichage des cartes HTML + Génération du JSON-LD pour l'IA Gemini
-        function afficherVelos(liste) {
-            const container = document.getElementById('velo-container');
+        function genererCartesHTML(liste) {
+            const grid = document.getElementById('velo-container');
             const seoContainer = document.getElementById('seo-ia-structured-data');
             
-            container.innerHTML = "";
-            seoContainer.innerHTML = ""; // Reset des balises IA
+            grid.innerHTML = "";
+            seoContainer.innerHTML = "";
 
-            if(liste.length === 0) {
-                container.innerHTML = "<p>Aucun vélo ne correspond à vos critères de recherche.</p>";
+            if (liste.length === 0) {
+                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:var(--text-muted);'>Aucun modèle disponible pour ces critères.</p>";
                 return;
             }
 
             liste.forEach(velo => {
-                // ---- PARTIE VISUELLE (Pour l'internaute) ----
+                // Image ou fallback
+                const imageSrc = (velo.image_url && velo.image_url.trim() !== "") ? velo.image_url : "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=600&q=80";
+
+                // Création de la carte
                 const card = document.createElement('div');
                 card.className = 'velo-card';
-
-                // Gestion de l'image de couverture
-                let imageHTML = `<div class="velo-image-wrapper"><span class="velo-image-placeholder">🚲</span></div>`;
-                if(velo.image_url && velo.image_url.trim() !== "") {
-                    imageHTML = `<div class="velo-image-wrapper"><img src="${velo.image_url}" class="velo-image" alt="${velo.nom}"></div>`;
-                }
-
-                // Construction de la carte
                 card.innerHTML = `
-                    ${imageHTML}
-                    <div class="velo-content">
-                        <h2 class="velo-title">${velo.nom}</h2>
-                        <div class="velo-price">${velo.prix} €</div>
-                        <div class="velo-specs">
-                            <div class="spec-item">⚙️ <strong>Moteur :</strong> ${velo.moteur || 'Non spécifié'}</div>
-                            <div class="spec-item">🔋 <strong>Batterie :</strong> ${velo.batterie || 'Non spécifié'}</div>
+                    <div class="image-container">
+                        <img src="${imageSrc}" class="velo-img" alt="${velo.nom}">
+                        <div class="velo-badge-price">${velo.prix} €</div>
+                    </div>
+                    <div class="velo-body">
+                        <h3 class="velo-name">${velo.nom}</h3>
+                        <div class="tech-specs">
+                            <div class="spec-row">
+                                <span class="spec-label">Moteur</span>
+                                <span class="spec-value">${velo.moteur || 'Standard'}</span>
+                            </div>
+                            <div class="spec-row">
+                                <span class="spec-label">Batterie</span>
+                                <span class="spec-value">${velo.batterie || 'N/A'}</span>
+                            </div>
                         </div>
-                        <p class="velo-description">${velo.description_ia || 'Aucune analyse descriptive disponible.'}</p>
-                        <a href="/admin.html?id=${encodeURIComponent(velo.identifiant)}&nom=${encodeURIComponent(velo.nom)}&prix=${velo.prix}&moteur=${encodeURIComponent(velo.moteur || '')}&batterie=${encodeURIComponent(velo.batterie || '')}&description_ia=${encodeURIComponent(velo.description_ia || '')}&image_url=${encodeURIComponent(velo.image_url || '')}" class="btn-edit">✏️ Modifier ce modèle</a>
+                        <p class="velo-desc">${velo.description_ia || 'Analyse en cours d\'écriture...'}</p>
+                        <a href="/admin.html?id=${encodeURIComponent(velo.identifiant)}&nom=${encodeURIComponent(velo.nom)}&prix=${velo.prix}&moteur=${encodeURIComponent(velo.moteur || '')}&batterie=${encodeURIComponent(velo.batterie || '')}&description_ia=${encodeURIComponent(velo.description_ia || '')}&image_url=${encodeURIComponent(velo.image_url || '')}" class="action-edit-btn">Modifier la fiche</a>
                     </div>
                 `;
-                container.appendChild(card);
+                grid.appendChild(card);
 
-                // ---- PARTIE INTELLIGENCE ARTIFICIELLE (Pour Gemini / ChatGPT) ----
-                // On crée une balise Schema.org au format JSON-LD pour chaque produit de la page
+                // Intégration Données Structurées GEO pour l'IA Gemini
                 const scriptIA = document.createElement('script');
                 scriptIA.type = 'application/ld+json';
-                
-                const structureDonneesIA = {
+                scriptIA.text = JSON.stringify({
                     "@context": "https://schema.org/",
                     "@type": "Product",
                     "name": velo.nom,
                     "image": velo.image_url || "",
-                    "description": velo.description_ia || `Vélo électrique ${velo.nom} équipé d'un moteur ${velo.moteur}.`,
-                    "mpn": velo.identifiant,
+                    "description": velo.description_ia || "",
                     "offers": {
                         "@type": "Offer",
                         "priceCurrency": "EUR",
-                        "price": velo.prix.toString(),
-                        "itemCondition": "https://schema.org/NewCondition",
-                        "availability": "https://schema.org/InStock"
+                        "price": velo.prix.toString()
                     }
-                };
-                
-                scriptIA.text = JSON.stringify(structureDonneesIA);
+                });
                 seoContainer.appendChild(scriptIA);
             });
         }
 
-        // 3. Système de filtre instantané (Nom, Moteur & Curseur de Prix)
-        function filtrerCatalog() {
-            const recherche = document.getElementById('search-input').value.toLowerCase();
+        function filtrerCatalogue() {
+            const texte = document.getElementById('search-input').value.toLowerCase();
             const prixMax = parseInt(document.getElementById('price-range').value);
-            
-            // Mise à jour de l'affichage du prix max en direct
             document.getElementById('price-val').innerText = prixMax;
 
-            const velosFiltris = tousLesVelos.filter(velo => {
-                const correspondTexte = velo.nom.toLowerCase().includes(recherche) || 
-                                        (velo.moteur && velo.moteur.toLowerCase().includes(recherche));
-                const correspondPrix = velo.prix <= prixMax;
-                
-                return correspondTexte && correspondPrix;
+            const resultat = listeLocaleVelos.filter(velo => {
+                const matchTexte = velo.nom.toLowerCase().includes(texte) || (velo.moteur && velo.moteur.toLowerCase().includes(texte));
+                const matchPrix = velo.prix <= prixMax;
+                return matchTexte && matchPrix;
             });
 
-            afficherVelos(velosFiltris);
+            genererCartesHTML(resultat);
         }
 
-        // Lancement au chargement de la page
-        window.onload = chargerCatalogue;
+        window.onload = initialiserCatalogue;
     </script>
 </body>
 </html>
