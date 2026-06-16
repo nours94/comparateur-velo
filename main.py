@@ -175,6 +175,13 @@ def page_administration():
         return FileResponse("admin.html")
     raise HTTPException(status_code=404, detail="Le fichier admin.html est introuvable.")
 
+# 🛠️ AJOUT ROUTE TECHNIQUE : Autoriser et distribuer l'image de fond du Hero
+@app.get("/hero-bike.jpg")
+def distribuer_image_hero():
+    if os.path.exists("hero-bike.jpg"):
+        return FileResponse("hero-bike.jpg")
+    raise HTTPException(status_code=404, detail="L'image hero-bike.jpg est introuvable à la racine.")
+
 # -------------------------------------------------------------------------
 # VISIBILITÉ MOTEURS IA (GEO) : CONFIGURATION ROBOTS.TXT
 # -------------------------------------------------------------------------
