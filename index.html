@@ -13,6 +13,7 @@
             --text-muted: #64748b;
             --bg-light: #ffffff;       /* Fond blanc pur */
             --bg-card: #f8fafc;        /* Gris très léger pour les cartes */
+            --font-serif: 'Georgia', Cambria, "Times New Roman", Times, serif;
         }
 
         body {
@@ -21,11 +22,10 @@
             color: var(--text-dark);
             margin: 0;
             padding: 0;
-            --font-serif: 'Georgia', Cambria, "Times New Roman", Times, serif;
         }
 
         /* -------------------------------------------------------------------------
-           NAV BAR / HEADER (Nettoyé du logo Les Voltés)
+           NAV BAR / HEADER
            ------------------------------------------------------------------------- */
         header {
             background-color: var(--bg-light);
@@ -73,19 +73,18 @@
             color: white;
         }
 
-
-/* -------------------------------------------------------------------------
-           HERO SECTION (Bannière d'accueil avec ton image personnalisée)
+        /* -------------------------------------------------------------------------
+           HERO SECTION (Version lumineuse et nette avec image personnalisée)
            ------------------------------------------------------------------------- */
         .hero-section {
-            background: linear-gradient(rgba(17, 29, 44, 0.85), rgba(17, 29, 44, 0.95)), 
+            background: linear-gradient(rgba(17, 29, 44, 0.45), rgba(17, 29, 44, 0.65)), 
                         url('https://t4.ftcdn.net/jpg/18/85/37/03/240_F_1885370361_5k9KDPcAoawrl2AXoiUO2zzAWaR3GE2Y.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             color: white;
             text-align: center;
-            padding: 90px 20px;
+            padding: 110px 20px;
         }
 
         .hero-title {
@@ -95,13 +94,19 @@
             margin: 0 auto 20px auto;
             max-width: 800px;
             line-height: 1.2;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
         }
 
         .hero-subtitle {
             font-size: 18px;
-            color: #cbd5e1;
+            color: #ffffff;
             margin-bottom: 35px;
-            font-weight: 300;
+            font-weight: 400;
+            max-width: 750px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.4;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.6);
         }
 
         .hero-btn {
@@ -116,6 +121,7 @@
             transition: background 0.2s;
             border: none;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .hero-btn:hover {
@@ -248,7 +254,6 @@
             margin: 0 0 15px 0;
         }
 
-        /* Spécifications techniques sous forme de lignes propres */
         .tech-specs {
             margin-bottom: 20px;
             font-size: 14px;
@@ -272,7 +277,7 @@
         }
 
         /* -------------------------------------------------------------------------
-           RESTAURATON ET STYLE DES PUCES ET LISTES (Fix Descriptions)
+           GESTION ET STYLE DES PUCES ET LISTES
            ------------------------------------------------------------------------- */
         .velo-desc {
             font-size: 14px;
@@ -282,11 +287,10 @@
             flex-grow: 1;
         }
 
-        /* Gestion stylisée si tes descriptions contiennent des listes HTML brutes (ul/li) */
         .velo-desc ul {
             margin: 10px 0;
             padding-left: 20px;
-            list-style-type: none; /* Nettoyage des puces navigateurs par défaut */
+            list-style-type: none;
         }
 
         .velo-desc li {
@@ -295,7 +299,6 @@
             padding-left: 15px;
         }
 
-        /* Ajout d'une puce personnalisée colorée en rose fuchsia devant chaque élément */
         .velo-desc li::before {
             content: "•";
             color: var(--pink-accent);
@@ -335,6 +338,7 @@
 </head>
 <body>
 
+    <!-- BARRE DE NAVIGATION -->
     <header>
         <div class="header-container">
             <a href="/" class="logo-text">VéloÉlec<span>&Co</span></a>
@@ -342,12 +346,14 @@
         </div>
     </header>
 
+    <!-- ACCUEIL HERO BANNER (Nouvelle accroche & fond lumineux) -->
     <section class="hero-section">
         <h1 class="hero-title">Le comparateur 100% indépendant qui trouve le vélo électrique fait pour vous.</h1>
         <p class="hero-subtitle">Autonomie, moteur, prix... Nous décryptons les fiches techniques pour vous dénicher le meilleur rapport qualité/prix.</p>
         <button class="hero-btn" onclick="document.getElementById('search-input').focus();">Trouver mon VAE idéal</button>
     </section>
 
+    <!-- SYSTEME DE FILTRES -->
     <section class="search-container">
         <div class="filter-box">
             <div class="filter-group">
@@ -363,6 +369,7 @@
         </div>
     </section>
 
+    <!-- AFFICHAGE DES VAE -->
     <h2 class="section-title">Nos VAE du quotidien préférés</h2>
     
     <main>
@@ -370,6 +377,7 @@
         <div class="velo-grid" id="velo-container"></div>
     </main>
 
+    <!-- ZONE TECHNIQUE SCRIPT DE L'IA -->
     <div id="seo-ia-structured-data"></div>
 
     <script>
@@ -386,27 +394,22 @@
             }
         }
 
-        // Fonction pour formater le texte brut et recréer de vraies puces HTML si l'utilisateur met des tirets ou des slashes
         function formaterDescriptionEnPuces(texte) {
             if (!texte) return 'Analyse en cours d\'écriture...';
-            
-            // Si le texte contient déjà des balises HTML, on le laisse tel quel
             if (texte.includes('<li>') || texte.includes('<ul>')) return texte;
 
-            // Découpage automatique si présence de doubles slashes (//), tirets (-) ou retours à la ligne
             let elements = [];
             if (texte.includes('//')) {
                 elements = texte.split('//');
             } else if (texte.includes('\n')) {
                 elements = texte.split('\n');
             } else {
-                return texte; // Retourne le texte brut s'il n'y a pas de séparateur
+                return texte;
             }
 
-            // Génération d'une liste propre
             let htmlListe = '<ul>';
             elements.forEach(el => {
-                let texteNettoye = el.replace(/^[-\s+*/]+/, '').trim(); // Enlève les vieux tirets ou espaces résiduels
+                let texteNettoye = el.replace(/^[-\s+*/]+/, '').trim();
                 if (texteNettoye !== "") {
                     htmlListe += `<li>${texteNettoye}</li>`;
                 }
@@ -429,8 +432,6 @@
 
             liste.forEach(velo => {
                 const imageSrc = (velo.image_url && velo.image_url.trim() !== "") ? velo.image_url : "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=600&q=80";
-                
-                // Traitement des descriptions pour générer les puces personnalisées
                 const descriptionFormatee = formaterDescriptionEnPuces(velo.description_ia);
 
                 const card = document.createElement('div');
@@ -458,7 +459,6 @@
                 `;
                 grid.appendChild(card);
 
-                // Données Structurées pour Gemini/ChatGPT
                 const scriptIA = document.createElement('script');
                 scriptIA.type = 'application/ld+json';
                 scriptIA.text = JSON.stringify({
