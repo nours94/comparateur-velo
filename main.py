@@ -113,16 +113,12 @@ def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
 @app.get("/api/ia/catalogue")
 def catalogue_pour_ia(db: Session = Depends(get_db)):
     velos = db.query(VeloDB).all()
-    reparateurs = db.query(ReparateurDB).all()
 
     return {
         "site": "VéloÉlec & Co",
         "version": "1.0",
         "objectif": "Comparateur indépendant de vélos électriques",
-        "description": "Catalogue structuré destiné aux assistants IA et moteurs de recherche intelligents.",
         "nombre_velos": len(velos),
-        "nombre_reparateurs": len(reparateurs),
-
         "velos": [
             {
                 "identifiant": v.identifiant,
@@ -134,22 +130,11 @@ def catalogue_pour_ia(db: Session = Depends(get_db)):
                 "image_url": v.image_url or ""
             }
             for v in velos
-        ],
-
-        "reparateurs": [
-            {
-                "id": r.id,
-                "nom": r.nom,
-                "ville": r.ville,
-                "adresse": r.adresse,
-                "telephone": r.telephone or "",
-                "note": r.note,
-                "tarif_horaire": r.tarif_horaire,
-                "specialites": r.specialites or ""
-            }
-            for r in reparateurs
         ]
     }
+
+
+
 
 # -------------------------------------------------------------------------
 # ROUTE ADMIN : AJOUT D'UN VÉLO
