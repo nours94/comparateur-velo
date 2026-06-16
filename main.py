@@ -122,8 +122,33 @@ def catalogue_pour_ia(db: Session = Depends(get_db)):
         "description": "Catalogue structuré destiné aux assistants IA et moteurs de recherche intelligents.",
         "nombre_velos": len(velos),
         "nombre_reparateurs": len(reparateurs),
-        "velos": velos,
-        "reparateurs": reparateurs
+
+        "velos": [
+            {
+                "identifiant": v.identifiant,
+                "nom": v.nom,
+                "prix": v.prix,
+                "moteur": v.moteur or "",
+                "batterie": v.batterie or "",
+                "description": v.description_ia or "",
+                "image_url": v.image_url or ""
+            }
+            for v in velos
+        ],
+
+        "reparateurs": [
+            {
+                "id": r.id,
+                "nom": r.nom,
+                "ville": r.ville,
+                "adresse": r.adresse,
+                "telephone": r.telephone or "",
+                "note": r.note,
+                "tarif_horaire": r.tarif_horaire,
+                "specialites": r.specialites or ""
+            }
+            for r in reparateurs
+        ]
     }
 
 # -------------------------------------------------------------------------
