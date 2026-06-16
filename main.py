@@ -108,6 +108,25 @@ def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
     return db.query(ReparateurDB).all()
 
 # -------------------------------------------------------------------------
+# ROUTE SPÉCIALE IA : CATALOGUE COMPLET POUR CHATGPT ET AUTRES IA
+# -------------------------------------------------------------------------
+@app.get("/api/ia/catalogue")
+def catalogue_pour_ia(db: Session = Depends(get_db)):
+    velos = db.query(VeloDB).all()
+    reparateurs = db.query(ReparateurDB).all()
+
+    return {
+        "site": "VéloÉlec & Co",
+        "version": "1.0",
+        "objectif": "Comparateur indépendant de vélos électriques",
+        "description": "Catalogue structuré destiné aux assistants IA et moteurs de recherche intelligents.",
+        "nombre_velos": len(velos),
+        "nombre_reparateurs": len(reparateurs),
+        "velos": velos,
+        "reparateurs": reparateurs
+    }
+
+# -------------------------------------------------------------------------
 # ROUTE ADMIN : AJOUT D'UN VÉLO
 # -------------------------------------------------------------------------
 @app.post("/api/ajouter-velo")
