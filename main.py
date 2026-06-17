@@ -3,40 +3,47 @@ import json
 from fastapi import FastAPI, Depends, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, PlainTextResponse
-from sqlalchemy import create_engine, Column, String, Integer, Float
+from sqlalchemy import create_engine, Column, String, Integer, Float, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
 # -------------------------------------------------------------------------
 # CONFIGURATION BDD (Lecture dynamique depuis l'environnement Render)
 # -------------------------------------------------------------------------
-# Récupération sécurisée de la chaîne de connexion Supabase configurée sur Render
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Sécurité : Si tu as oublié de la configurer sur Render, l'application t'avertira proprement
 if not DATABASE_URL:
     raise RuntimeError(
-        "Erreur : La variable d'environnement 'DATABASE_URL' est introuvable sur Render. "
-        "Veuillez l'ajouter dans l'onglet 'Environment' de votre dashboard Render."
+        "Erreur : La variable d'environnement 'DATABASE_URL' est introuvable sur Render."
     )
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Token de sécurité secret pour valider les envois du formulaire admin
+# Token de sécurité secret pour valider les requêtes de ton GPT personnalisé ou de l'admin
 ROBOT_TOKEN = os.getenv("ROBOT_TOKEN", "super_secret_token_123")
 
 # -------------------------------------------------------------------------
-# MODÈLES DE LA BASE DE DONNÉES (SQLAlchemy)
+# MODÈLES DE LA BASE DE DONNÉES (SQLAlchemy - 15 critères)
 # -------------------------------------------------------------------------
 class VeloDB(Base):
-    __tablename__ = "vélo"  # Doit correspondre exactement au nom de ta table Supabase
+    __tablename__ = "vélo"
     identifiant = Column(String, primary_key=True, index=True)
     nom = Column(String, nullable=False)
+    marque = Column(String, nullable=True)
+    modele = Column(String, nullable=True)
     prix = Column(Integer, default=0)
-    moteur = Column(String, nullable=True)
-    batterie = Column(String, nullable=True)
+    marque_moteur = Column(String, nullable=True)
+    couple_moteur = Column(Integer, default=0)
+    puissance_moteur = Column(Integer, default=250)
+    energie_batterie = Column(Integer, default=0)
+    autonomie = Column(Integer, default=0)
+    categorie = Column(String, nullable=True)  # Ville, VTT, Trekking, Cargo
+    poids = Column(Float, default=0.0)
+    taille_min = Column(Integer, default=150)
+    taille_max = Column(Integer, default=200)
+    suspension = Column(Boolean, default=False)
     description_ia = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
 
@@ -51,13 +58,15 @@ class ReparateurDB(Base):
     tarif_horaire = Column(Integer, default=50)
     specialites = Column(String, nullable=True)
 
-# Création automatique des tables dans Supabase si elles n'existent pas
 Base.metadata.create_all(bind=engine)
 
 # -------------------------------------------------------------------------
 # INITIALISATION FASTAPI & CONFIGURATION CORS
 # -------------------------------------------------------------------------
-app = FastAPI(title="VéloÉlec & Co - Comparateur Supabase")
+app = FastAPI(
+    title="VéloÉlec & Co - API pour GPT Personnalisé & Front",
+    description="API sécurisée connectée à Supabase permettant à un GPT personnalisé d'administrer le catalogue de vélos."
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -67,7 +76,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Gestionnaire de sessions de base de données
 def get_db():
     db = SessionLocal()
     try:
@@ -75,31 +83,10 @@ def get_db():
     finally:
         db.close()
 
-# Remplissage initial automatique du catalogue au démarrage de Render (si vide)
-@app.on_event("startup")
-def init_db():
-    db = SessionLocal()
-    try:
-        if db.query(VeloDB).count() == 0 and os.path.exists("velos.json"):
-            with open("velos.json", "r", encoding="utf-8") as f:
-                liste_velos = json.load(f)
-                for v in liste_velos:
-                    db.add(VeloDB(
-                        identifiant=v.get("id"), nom=v.get("nom"), prix=v.get("prix", 0),
-                        moteur=v.get("moteur"), batterie=v.get("batterie"),
-                        description_ia=v.get("description_ia"), image_url=v.get("image_url")
-                    ))
-            db.commit()
-            print("✅ Initialisation réussie : vélos injectés dans Supabase.")
-    except Exception as e:
-        print(f"❌ Erreur lors du peuplement de la base : {e}")
-    finally:
-        db.close()
-
 # -------------------------------------------------------------------------
-# ROUTES DE L'API PUBLIQUE
+# ROUTES DE L'API PUBLIQUE / GPT (LECTURE)
 # -------------------------------------------------------------------------
-@app.get("/api/velos")
+@app.get("/api/velos", summary="Récupérer tous les vélos (Accessible par le Front et le GPT)")
 def recuperer_tous_les_velos(db: Session = Depends(get_db)):
     return db.query(VeloDB).all()
 
@@ -108,88 +95,73 @@ def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
     return db.query(ReparateurDB).all()
 
 # -------------------------------------------------------------------------
-# ROUTE SPÉCIALE IA : CATALOGUE COMPLET POUR CHATGPT ET AUTRES IA
+# ENTRÉE COMPATIBLE GPT : AJOUT OU MODIFICATION DE VÉLO VIA JSON / FORM
 # -------------------------------------------------------------------------
-@app.get("/api/ia/catalogue")
-def catalogue_pour_ia(db: Session = Depends(get_db)):
-    velos = db.query(VeloDB).all()
-
-    return {
-        "site": "VéloÉlec & Co",
-        "version": "1.0",
-        "objectif": "Comparateur indépendant de vélos électriques",
-        "nombre_velos": len(velos),
-        "velos": [
-            {
-                "identifiant": v.identifiant,
-                "nom": v.nom,
-                "prix": v.prix,
-                "moteur": v.moteur or "",
-                "batterie": v.batterie or "",
-                "description": v.description_ia or "",
-                "image_url": v.image_url or ""
-            }
-            for v in velos
-        ]
-    }
-
-
-
-
-# -------------------------------------------------------------------------
-# ROUTE ADMIN : AJOUT D'UN VÉLO
-# -------------------------------------------------------------------------
-@app.post("/api/ajouter-velo")
+@app.post("/api/ajouter-velo", summary="Ajouter un vélo (Formulaire Web ou action GPT)")
 def ajouter_nouveau_velo(
-    id: str = Form(...), nom: str = Form(...), prix: int = Form(0),
-    moteur: str = Form(None), batterie: str = Form(None),
-    description_ia: str = Form(None), image_url: str = Form(None),
-    robot_token_form: str = Form(...), db: Session = Depends(get_db)
+    id: str = Form(...), nom: str = Form(...), marque: str = Form(None), modele: str = Form(None),
+    prix: int = Form(0), marque_moteur: str = Form(None), couple_moteur: int = Form(0),
+    puissance_moteur: int = Form(250), energie_batterie: int = Form(0), autonomie: int = Form(0),
+    categorie: str = Form(None), poids: float = Form(0.0), taille_min: int = Form(150),
+    taille_max: int = Form(200), suspension: bool = Form(False), description_ia: str = Form(None),
+    image_url: str = Form(None), robot_token_form: str = Form(...), db: Session = Depends(get_db)
 ):
     if robot_token_form != ROBOT_TOKEN:
-        raise HTTPException(status_code=403, detail="Accès refusé : Token invalide.")
+        raise HTTPException(status_code=403, detail="Accès refusé : ROBOT_TOKEN invalide.")
     
     velo_existant = db.query(VeloDB).filter(VeloDB.identifiant == id).first()
     if velo_existant:
-        raise HTTPException(status_code=400, detail="Ce vélo existe déjà. Utilisez le mode modification.")
+        raise HTTPException(status_code=400, detail="Ce vélo existe déjà dans Supabase. Utilisez la route de modification.")
     
     nouveau_velo = VeloDB(
-        identifiant=id, nom=nom, prix=prix, moteur=moteur, 
-        batterie=batterie, description_ia=description_ia, image_url=image_url
+        identifiant=id, nom=nom, marque=marque, modele=modele, prix=prix,
+        marque_moteur=marque_moteur, couple_moteur=couple_moteur, puissance_moteur=puissance_moteur,
+        energie_batterie=energie_batterie, autonomie=autonomie, categorie=categorie,
+        poids=poids, taille_min=taille_min, taille_max=taille_max, suspension=suspension,
+        description_ia=description_ia, image_url=image_url
     )
     db.add(nouveau_velo)
     db.commit()
-    return {"status": "created", "message": f"Nouveau vélo '{nom}' ajouté avec succès dans Supabase !"}
+    return {"status": "created", "message": f"Le vélo expert '{nom}' a été ajouté avec succès par l'automate !"}
 
-# -------------------------------------------------------------------------
-# ROUTE ADMIN : MODIFICATION D'UN VÉLO
-# -------------------------------------------------------------------------
-@app.post("/api/modifier-velo")
+@app.post("/api/modifier-velo", summary="Modifier un vélo existant")
 def modifier_velo_existant(
-    id: str = Form(...), nom: str = Form(...), prix: int = Form(0),
-    moteur: str = Form(None), batterie: str = Form(None),
-    description_ia: str = Form(None), image_url: str = Form(None),
-    robot_token_form: str = Form(...), db: Session = Depends(get_db)
+    id: str = Form(...), nom: str = Form(...), marque: str = Form(None), modele: str = Form(None),
+    prix: int = Form(0), marque_moteur: str = Form(None), couple_moteur: int = Form(0),
+    puissance_moteur: int = Form(250), energie_batterie: int = Form(0), autonomie: int = Form(0),
+    categorie: str = Form(None), poids: float = Form(0.0), taille_min: int = Form(150),
+    taille_max: int = Form(200), suspension: bool = Form(False), description_ia: str = Form(None),
+    image_url: str = Form(None), robot_token_form: str = Form(...), db: Session = Depends(get_db)
 ):
     if robot_token_form != ROBOT_TOKEN:
-        raise HTTPException(status_code=403, detail="Accès refusé : Token invalide.")
+        raise HTTPException(status_code=403, detail="Accès refusé : ROBOT_TOKEN invalide.")
     
     velo = db.query(VeloDB).filter(VeloDB.identifiant == id).first()
     if not velo:
-        raise HTTPException(status_code=404, detail="Désolé, ce vélo n'existe pas dans Supabase.")
+        raise HTTPException(status_code=404, detail="Vélo introuvable dans Supabase.")
     
     velo.nom = nom
+    velo.marque = marque
+    velo.modele = modele
     velo.prix = prix
-    velo.moteur = moteur
-    velo.batterie = batterie
+    velo.marque_moteur = marque_moteur
+    velo.couple_moteur = couple_moteur
+    velo.puissance_moteur = puissance_moteur
+    velo.energie_batterie = energie_batterie
+    velo.autonomie = autonomie
+    velo.categorie = categorie
+    velo.poids = poids
+    velo.taille_min = taille_min
+    velo.taille_max = taille_max
+    velo.suspension = suspension
     velo.description_ia = description_ia
     velo.image_url = image_url
     
     db.commit()
-    return {"status": "success", "message": f"Le vélo '{nom}' a été mis à jour avec succès dans Supabase !"}
+    return {"status": "success", "message": f"Le vélo '{nom}' a été mis à jour avec ses nouveaux critères experts."}
 
 # -------------------------------------------------------------------------
-# INTERFACES FRONT-END (HTML)
+# INTERFACES VISUELLES (HTML)
 # -------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def page_accueil():
@@ -204,27 +176,21 @@ def page_administration():
         return FileResponse("admin.html")
     raise HTTPException(status_code=404, detail="Le fichier admin.html est introuvable.")
 
-# 🛠️ AJOUT ROUTE TECHNIQUE : Autoriser et distribuer l'image de fond du Hero
 @app.get("/hero-bike.jpg")
 def distribuer_image_hero():
     if os.path.exists("hero-bike.jpg"):
         return FileResponse("hero-bike.jpg")
-    raise HTTPException(status_code=404, detail="L'image hero-bike.jpg est introuvable à la racine.")
+    raise HTTPException(status_code=404, detail="L'image hero-bike.jpg est introuvable.")
 
 # -------------------------------------------------------------------------
-# VISIBILITÉ MOTEURS IA (GEO) : CONFIGURATION ROBOTS.TXT
+# SÉCURITÉ ET VISIBILITÉ (Robots & Moteurs IA)
 # -------------------------------------------------------------------------
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
     contenu = (
-        "User-agent: *\n"
-        "Allow: /\n\n"
-        "# Autoriser explicitement les moteurs d'indexation et de recherche IA\n"
-        "User-agent: Google-Extended\n"
-        "Allow: /\n\n"
-        "User-agent: GPTBot\n"
-        "Allow: /\n\n"
-        "User-agent: PerplexityBot\n"
-        "Allow: /\n"
+        "User-agent: *\nAllow: /\n\n"
+        "User-agent: Google-Extended\nAllow: /\n\n"
+        "User-agent: GPTBot\nAllow: /\n\n"
+        "User-agent: PerplexityBot\nAllow: /\n"
     )
     return contenu
