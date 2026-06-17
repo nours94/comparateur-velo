@@ -3,19 +3,14 @@ import json
 from fastapi import FastAPI, Depends, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, PlainTextResponse
-from sqlalchemy import create_engine, Column, String, Integer, Float, Boolean
+from sqlalchemy import create_engine, Column, String, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
-# -------------------------------------------------------------------------
-# CONFIGURATION BDD
-# -------------------------------------------------------------------------
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise RuntimeError(
-        "Erreur : La variable d'environnement 'DATABASE_URL' est introuvable sur Render."
-    )
+    raise RuntimeError("Erreur : La variable 'DATABASE_URL' est introuvable sur Render.")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -24,27 +19,20 @@ Base = declarative_base()
 ROBOT_TOKEN = os.getenv("ROBOT_TOKEN", "super_secret_token_123")
 
 # -------------------------------------------------------------------------
-# MODÈLE DE LA BASE DE DONNÉES (Table : velos)
+# MODÈLE AVEC ÉTAPE 1 : SECTEUR IDENTITÉ (Marque + Modèle)
 # -------------------------------------------------------------------------
 class VeloDB(Base):
-    __tablename__ = "velos"  # DOIT correspondre exactement au nom sur Supabase
+    __tablename__ = "velos"
     identifiant = Column("id", String, primary_key=True, index=True)
     nom = Column(String, nullable=False)
-    marque = Column(String, nullable=True)
-    modele = Column(String, nullable=True)
     prix = Column(Integer, default=0)
-    marque_moteur = Column(String, nullable=True)
-    couple_moteur = Column(Integer, default=0)
-    puissance_moteur = Column(Integer, default=250)
-    energie_batterie = Column(Integer, default=0)
-    autonomie = Column(Integer, default=0)
-    categorie = Column(String, nullable=True)
-    poids = Column(Float, default=0.0)
-    taille_min = Column(Integer, default=150)
-    taille_max = Column(Integer, default=200)
-    suspension = Column(Boolean, default=False)
+    moteur = Column(String, nullable=True)
+    batterie = Column(String, nullable=True)
     description_ia = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
+    # Étape 1 : Nos nouveaux champs progressifs
+    marque = Column(String, nullable=True)
+    modele = Column(String, nullable=True)
 
 class ReparateurDB(Base):
     __tablename__ = "reparateurs"
@@ -59,10 +47,7 @@ class ReparateurDB(Base):
 
 Base.metadata.create_all(bind=engine)
 
-# -------------------------------------------------------------------------
-# INITIALISATION FASTAPI & CORS
-# -------------------------------------------------------------------------
-app = FastAPI(title="VéloÉlec & Co - API Stable")
+app = FastAPI(title="VéloÉlec & Co - API Étape par Étape")
 
 app.add_middleware(
     CORSMiddleware,
@@ -79,9 +64,6 @@ def get_db():
     finally:
         db.close()
 
-# -------------------------------------------------------------------------
-# ROUTES DE L'API (LECTURE)
-# -------------------------------------------------------------------------
 @app.get("/api/velos")
 def recuperer_tous_les_velos(db: Session = Depends(get_db)):
     return db.query(VeloDB).all()
@@ -97,13 +79,13 @@ def recuperer_un_velo(id_velo: str, db: Session = Depends(get_db)):
 def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
     return db.query(ReparateurDB).all()
 
+# Route restaurée pour ton GPT
 @app.get("/api/ia/catalogue")
 def catalogue_pour_ia(db: Session = Depends(get_db)):
     velos = db.query(VeloDB).all()
     return {
         "site": "VéloÉlec & Co",
-        "version": "2.0",
-        "nombre_velos": len(velos),
+        "version": "Progressive 1.0",
         "velos": [
             {
                 "identifiant": v.identifiant,
@@ -111,48 +93,28 @@ def catalogue_pour_ia(db: Session = Depends(get_db)):
                 "marque": v.marque or "",
                 "modele": v.modele or "",
                 "prix": v.prix,
-                "marque_moteur": v.marque_moteur or "",
-                "couple_moteur": v.couple_moteur,
-                "puissance_moteur": v.puissance_moteur,
-                "energie_batterie": v.energie_batterie,
-                "autonomie": v.autonomie,
-                "categorie": v.categorie or "",
-                "poids": v.poids,
-                "taille_min": v.taille_min,
-                "taille_max": v.taille_max,
-                "suspension": v.suspension,
+                "moteur": v.moteur or "",
+                "batterie": v.batterie or "",
                 "description": v.description_ia or "",
                 "image_url": v.image_url or ""
-            }
-            for v in velos
+            } for v in velos
         ]
     }
 
-# -------------------------------------------------------------------------
-# ROUTES DE L'API (ECRITURE)
-# -------------------------------------------------------------------------
 @app.post("/api/ajouter-velo")
 def ajouter_nouveau_velo(
-    id: str = Form(...), nom: str = Form(...), marque: str = Form(None), modele: str = Form(None),
-    prix: int = Form(0), marque_moteur: str = Form(None), couple_moteur: int = Form(0),
-    puissance_moteur: int = Form(250), energie_batterie: int = Form(0), autonomie: int = Form(0),
-    categorie: str = Form(None), poids: float = Form(0.0), taille_min: int = Form(150),
-    taille_max: int = Form(200), suspension: bool = Form(False), description_ia: str = Form(None),
-    image_url: str = Form(None), robot_token_form: str = Form(...), db: Session = Depends(get_db)
+    id: str = Form(...), nom: str = Form(...), prix: int = Form(0),
+    moteur: str = Form(None), batterie: str = Form(None),
+    description_ia: str = Form(None), image_url: str = Form(None),
+    marque: str = Form(None), modele: str = Form(None), # Reçu depuis l'admin
+    robot_token_form: str = Form(...), db: Session = Depends(get_db)
 ):
     if robot_token_form != ROBOT_TOKEN:
         raise HTTPException(status_code=403, detail="Token incorrect.")
     
-    velo_existant = db.query(VeloDB).filter(VeloDB.identifiant == id).first()
-    if velo_existant:
-        raise HTTPException(status_code=400, detail="L'ID existe déjà.")
-    
     nouveau_velo = VeloDB(
-        identifiant=id, nom=nom, marque=marque, modele=modele, prix=prix,
-        marque_moteur=marque_moteur, couple_moteur=couple_moteur, puissance_moteur=puissance_moteur,
-        energie_batterie=energie_batterie, autonomie=autonomie, categorie=categorie,
-        poids=poids, taille_min=taille_min, taille_max=taille_max, suspension=suspension,
-        description_ia=description_ia, image_url=image_url
+        identifiant=id, nom=nom, prix=prix, moteur=moteur, batterie=batterie,
+        description_ia=description_ia, image_url=image_url, marque=marque, modele=modele
     )
     db.add(nouveau_velo)
     db.commit()
@@ -160,12 +122,11 @@ def ajouter_nouveau_velo(
 
 @app.post("/api/modifier-velo")
 def modifier_velo_existant(
-    id: str = Form(...), nom: str = Form(...), marque: str = Form(None), modele: str = Form(None),
-    prix: int = Form(0), marque_moteur: str = Form(None), couple_moteur: int = Form(0),
-    puissance_moteur: int = Form(250), energie_batterie: int = Form(0), autonomie: int = Form(0),
-    categorie: str = Form(None), poids: float = Form(0.0), taille_min: int = Form(150),
-    taille_max: int = Form(200), suspension: bool = Form(False), description_ia: str = Form(None),
-    image_url: str = Form(None), robot_token_form: str = Form(...), db: Session = Depends(get_db)
+    id: str = Form(...), nom: str = Form(...), prix: int = Form(0),
+    moteur: str = Form(None), batterie: str = Form(None),
+    description_ia: str = Form(None), image_url: str = Form(None),
+    marque: str = Form(None), modele: str = Form(None), # Reçu depuis l'admin
+    robot_token_form: str = Form(...), db: Session = Depends(get_db)
 ):
     if robot_token_form != ROBOT_TOKEN:
         raise HTTPException(status_code=403, detail="Token incorrect.")
@@ -175,28 +136,17 @@ def modifier_velo_existant(
         raise HTTPException(status_code=404, detail="Vélo introuvable.")
     
     velo.nom = nom
-    velo.marque = marque
-    velo.modele = modele
     velo.prix = prix
-    velo.marque_moteur = marque_moteur
-    velo.couple_moteur = couple_moteur
-    velo.puissance_moteur = puissance_moteur
-    velo.energie_batterie = energie_batterie
-    velo.autonomie = autonomie
-    velo.categorie = categorie
-    velo.poids = poids
-    velo.taille_min = taille_min
-    velo.taille_max = taille_max
-    velo.suspension = suspension
+    velo.moteur = moteur
+    velo.batterie = batterie
     velo.description_ia = description_ia
     velo.image_url = image_url
+    velo.marque = marque
+    velo.modele = modele
     
     db.commit()
     return {"status": "success", "message": f"Le vélo '{nom}' a bien été mis à jour !"}
 
-# -------------------------------------------------------------------------
-# INTERFACES
-# -------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def page_accueil():
     if os.path.exists("index.html"):
@@ -218,4 +168,4 @@ def distribuer_image_hero():
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
-    return "User-agent: *\nAllow: /\nUser-agent: GPTBot\nAllow: /\n"
+    return "User-agent: *\nAllow: /\n"

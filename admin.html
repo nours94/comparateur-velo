@@ -2,410 +2,154 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VéloÉlec & Co - Console d'Administration Experts</title>
+    <title>Console Admin - Étape 1</title>
     <style>
-        :root {
-            --dark-blue: #111d2c;
-            --pink-accent: #d1125b;
-            --pink-hover: #b00b4a;
-            --text-dark: #2c3e50;
-            --bg-light: #f8fafc;
-            --border-color: #cbd5e1;
-            --section-bg: #f1f5f9;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-dark);
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background-color: white;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 15px 20px;
-        }
-
-        .header-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 20px;
-            font-weight: 800;
-            color: var(--dark-blue);
-            text-decoration: none;
-        }
-        .logo span { color: var(--pink-accent); }
-
-        .back-btn {
-            color: var(--dark-blue);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 40px auto;
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-
-        h1 { font-size: 24px; color: var(--dark-blue); margin: 0 0 5px 0; }
-        .subtitle { color: #64748b; font-size: 14px; margin-bottom: 30px; }
-
-        fieldset {
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 25px;
-            background-color: white;
-        }
-
-        legend {
-            font-weight: 700;
-            color: var(--pink-accent);
-            padding: 0 10px;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group { margin-bottom: 15px; }
-
-        label {
-            display: block;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-            color: var(--dark-blue);
-        }
-
-        input[type="text"], input[type="number"], textarea, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
-            box-sizing: border-box;
-            outline: none;
-        }
-
-        input:focus, textarea:focus, select:focus { border-color: var(--pink-accent); }
-        
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 25px;
-        }
-        
-        .checkbox-group input { width: 18px; height: 18px; accent-color: var(--pink-accent); }
-
-        .row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-
-        .btn-submit {
-            background-color: var(--pink-accent);
-            color: white;
-            border: none;
-            padding: 14px;
-            width: 100%;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-submit:hover { background-color: var(--pink-hover); }
-
-        #message-box {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 6px;
-            display: none;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .success { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        
-        .sync-indicator {
-            background-color: #e0f2fe;
-            color: #0369a1;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            display: none;
-        }
+        body { font-family: sans-serif; background: #f8fafc; padding: 20px; color: #334155; }
+        .box { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; }
+        input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 4px; }
+        button { width: 100%; padding: 12px; background: #d1125b; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        #status { padding: 10px; margin-bottom: 15px; display: none; border-radius: 4px; font-weight: bold; }
+        .info-sync { background: #e0f2fe; color: #0369a1; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="header-container">
-            <a href="/" class="logo">VéloÉlec<span>&Co</span> / Console Admin</a>
-            <a href="/" class="back-btn">← Retour au site</a>
+<div class="box">
+    <h2>Gestion du catalogue - Étape 1 (Identité)</h2>
+    <div id="status"></div>
+
+    <form id="form-velo">
+        <div class="group">
+            <label>Jeton de sécurité (ROBOT_TOKEN)</label>
+            <input type="text" id="robot_token_form" required>
         </div>
-    </header>
 
-    <div class="container">
-        <h1 id="form-title">Ajouter un nouveau vélo</h1>
-        <p class="subtitle">Console de synchronisation en temps réel avec Supabase.</p>
+        <div class="group">
+            <label>Mode opératoire</label>
+            <select id="action-mode" onchange="basculerMode()">
+                <option value="ajout">Ajouter un nouveau vélo</option>
+                <option value="modification">Modifier un vélo existant (Auto-remplissage)</option>
+            </select>
+        </div>
+
+        <div class="group">
+            <label>ID unique du vélo</label>
+            <input type="text" id="id" required placeholder="ex: nakamura-e-crossover" onchange="chargerDonneesExistantes()">
+        </div>
+
+        <div class="group">
+            <label>Nom du vélo</label>
+            <input type="text" id="nom" required>
+        </div>
+
+        <div class="group" style="background: #fdf2f8; padding: 10px; border: 1px solid #fbcfe8; border-radius: 4px;">
+            <label style="color: #d1125b;">[NOUVEAU] Marque</label>
+            <input type="text" id="marque" placeholder="ex: Nakamura">
+            <label style="color: #d1125b; margin-top:5px;">[NOUVEAU] Modèle</label>
+            <input type="text" id="modele" placeholder="ex: E-Crossover XV">
+        </div>
+
+        <div class="group">
+            <label>Prix (€)</label>
+            <input type="number" id="prix" value="0">
+        </div>
+
+        <div class="group">
+            <label>Infos Moteur</label>
+            <input type="text" id="moteur">
+        </div>
+
+        <div class="group">
+            <label>Infos Batterie</label>
+            <input type="text" id="batterie">
+        </div>
+
+        <div class="group">
+            <label>Description IA</label>
+            <textarea id="description_ia"></textarea>
+        </div>
+
+        <div class="group">
+            <label>URL Image</label>
+            <input type="text" id="image_url">
+        </div>
+
+        <button type="submit">Envoyer les données à Supabase</button>
+    </form>
+</div>
+
+<script>
+    function basculerMode() {
+        const mode = document.getElementById('action-mode').value;
+        document.getElementById('id').style.background = mode === 'modification' ? '#e2e8f0' : '#ffffff';
+        if(mode === 'modification') chargerDonneesExistantes();
+    }
+
+    // Pré-remplissage magique pour ne plus avoir à tout retaper !
+    async function chargerDonneesExistantes() {
+        const id = document.getElementById('id').value.trim();
+        const mode = document.getElementById('action-mode').value;
+        if (!id || mode !== 'modification') return;
+
+        const status = document.getElementById('status');
+        status.className = "info-sync";
+        status.innerText = "🔄 Récupération de la fiche actuelle dans Supabase...";
+        status.style.display = "block";
+
+        try {
+            const res = await fetch(`/api/velos/${encodeURIComponent(id)}`);
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('nom').value = data.nom || '';
+                document.getElementById('prix').value = data.prix || 0;
+                document.getElementById('moteur').value = data.moteur || '';
+                document.getElementById('batterie').value = data.batterie || '';
+                document.getElementById('description_ia').value = data.description_ia || '';
+                document.getElementById('image_url').value = data.image_url || '';
+                document.getElementById('marque').value = data.marque || '';
+                document.getElementById('modele').value = data.modele || '';
+                status.innerText = "✅ Données actuelles chargées. Modifie uniquement ce que tu veux !";
+            } else {
+                status.innerText = "ℹ️ Aucun vélo trouvé avec cet ID en base de données.";
+            }
+        } catch(e) {
+            status.innerText = "❌ Erreur de connexion avec l'API.";
+        }
+    }
+
+    document.getElementById('form-velo').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const mode = document.getElementById('action-mode').value;
+        const endpoint = mode === 'ajout' ? '/api/ajouter-velo' : '/api/modifier-velo';
+
+        const params = new URLSearchParams();
+        params.append('id', document.getElementById('id').value);
+        params.append('nom', document.getElementById('nom').value);
+        params.append('prix', document.getElementById('prix').value);
+        params.append('moteur', document.getElementById('moteur').value);
+        params.append('batterie', document.getElementById('batterie').value);
+        params.append('description_ia', document.getElementById('description_ia').value);
+        params.append('image_url', document.getElementById('image_url').value);
+        params.append('marque', document.getElementById('marque').value);
+        params.append('modele', document.getElementById('modele').value);
+        params.append('robot_token_form', document.getElementById('robot_token_form').value);
+
+        const res = await fetch(endpoint, { method: 'POST', body: params });
+        const resData = await res.json();
         
-        <div id="sync-status" class="sync-indicator">🔄 Données actuelles récupérées de Supabase...</div>
-
-        <form id="velo-form">
-            <div class="form-group">
-                <label for="robot_token_form">Clé Secrète de Sécurité (ROBOT_TOKEN)</label>
-                <input type="text" id="robot_token_form" required placeholder="Entrez le token configuré sur Render">
-            </div>
-
-            <fieldset>
-                <legend>1. Identité & Prix</legend>
-                <div class="row-2">
-                    <div class="form-group">
-                        <label for="id">ID unique (Clé)</label>
-                        <input type="text" id="id" required placeholder="ex: nakamura-e-crossover" onchange="chargerDonneesExistantes()">
-                    </div>
-                    <div class="form-group">
-                        <label for="nom">Nom commercial</label>
-                        <input type="text" id="nom" required placeholder="ex: Intersport Nakamura E-Crossover">
-                    </div>
-                </div>
-                <div class="row-3">
-                    <div class="form-group">
-                        <label for="marque">Marque</label>
-                        <input type="text" id="marque" placeholder="ex: Nakamura">
-                    </div>
-                    <div class="form-group">
-                        <label for="modele">Modèle</label>
-                        <input type="text" id="modele" placeholder="ex: E-Crossover XV">
-                    </div>
-                    <div class="form-group">
-                        <label for="prix">Prix (€)</label>
-                        <input type="number" id="prix" value="0" required>
-                    </div>
-                </div>
-                <div class="row-2">
-                    <div class="form-group">
-                        <label for="categorie">Catégorie</label>
-                        <select id="categorie">
-                            <option value="Ville">Ville / Urbain</option>
-                            <option value="VTT">VTT Électrique</option>
-                            <option value="Trekking">Trekking / VTC</option>
-                            <option value="Cargo">Cargo / Longtail</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="image_url">URL de l'image</label>
-                        <input type="text" id="image_url" placeholder="https://...">
-                    </div>
-                </div>
-            </fieldset>
-
-            <fieldset>
-                <legend>2. Motorisation & Autonomie</legend>
-                <div class="row-2">
-                    <div class="form-group">
-                        <label for="marque_moteur">Marque / Modèle Moteur</label>
-                        <input type="text" id="marque_moteur" placeholder="ex: Naka Hub One / Bosch Performance">
-                    </div>
-                    <div class="form-group">
-                        <label for="couple_moteur">Couple Moteur (Nm)</label>
-                        <input type="number" id="couple_moteur" value="0">
-                    </div>
-                </div>
-                <div class="row-3">
-                    <div class="form-group">
-                        <label for="puissance_moteur">Puissance (Watts)</label>
-                        <input type="number" id="puissance_moteur" value="250">
-                    </div>
-                    <div class="form-group">
-                        <label for="energie_batterie">Capacité Batterie (Wh)</label>
-                        <input type="number" id="energie_batterie" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="autonomie">Autonomie estimée (km)</label>
-                        <input type="number" id="autonomie" value="0">
-                    </div>
-                </div>
-            </fieldset>
-
-            <fieldset>
-                <legend>3. Spécifications Châssis</legend>
-                <div class="row-3">
-                    <div class="form-group">
-                        <label for="poids">Poids du vélo (kg)</label>
-                        <input type="number" id="poids" step="0.1" value="0.0">
-                    </div>
-                    <div class="form-group">
-                        <label for="taille_min">Taille Min Cycliste (cm)</label>
-                        <input type="number" id="taille_min" value="150">
-                    </div>
-                    <div class="form-group">
-                        <label for="taille_max">Taille Max Cycliste (cm)</label>
-                        <input type="number" id="taille_max" value="200">
-                    </div>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="suspension">
-                    <label for="suspension">Présence d'une suspension (Avant ou Intégrale)</label>
-                </div>
-            </fieldset>
-
-            <fieldset>
-                <legend>4. Analyse Textuelle IA</legend>
-                <div class="form-group">
-                    <label for="description_ia">Analyse de l'expert (Séparez vos lignes par une touche Entrée)</label>
-                    <textarea id="description_ia" placeholder="Moteur idéal pour le dénivelé...&#10;Excellente rigidité de cadre..."></textarea>
-                </div>
-            </fieldset>
-
-            <div class="form-group" style="margin-top:20px;">
-                <label for="action-mode">Type d'opération Supabase</label>
-                <select id="action-mode" onchange="ajusterInterfaceMode()">
-                    <option value="ajout">Créer une nouvelle entrée (Ajout)</option>
-                    <option value="modification">Mettre à jour une fiche (Modification)</option>
-                </select>
-            </div>
-
-            <button type="submit" class="btn-submit" id="btn-text">Exécuter la requête</button>
-        </form>
-
-        <div id="message-box"></div>
-    </div>
-
-    <script>
-        // Détection à l'ouverture (si clic depuis la page d'accueil)
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const idParam = urlParams.get('id');
-            if (idParam) {
-                document.getElementById('id').value = idParam;
-                document.getElementById('action-mode').value = 'modification';
-                ajusterInterfaceMode();
-                chargerDonneesExistantes();
-            }
-        };
-
-        function ajusterInterfaceMode() {
-            const mode = document.getElementById('action-mode').value;
-            document.getElementById('form-title').innerText = mode === 'modification' ? "Modifier un vélo existant" : "Ajouter un nouveau vélo";
-            document.getElementById('btn-text').innerText = mode === 'modification' ? "Mettre à jour dans Supabase" : "Enregistrer dans Supabase";
-            document.getElementById('id').style.backgroundColor = mode === 'modification' ? "#f1f5f9" : "#ffffff";
+        const status = document.getElementById('status');
+        status.style.display = "block";
+        if(res.ok) {
+            status.style.background = "#dcfce7"; status.style.color = "#166534";
+            status.innerText = "🎉 " + resData.message;
+            if(mode === 'ajout') document.getElementById('form-velo').reset();
+        } else {
+            status.style.background = "#fee2e2"; status.style.color = "#991b1b";
+            status.innerText = "❌ Erreur : " + resData.detail;
         }
-
-        // FONCTION CLÉ : Va chercher le contenu réel dans Supabase pour éviter les pertes de données
-        async function chargerDonneesExistantes() {
-            const idVelo = document.getElementById('id').value.trim();
-            const mode = document.getElementById('action-mode').value;
-            if (!idVelo || mode !== 'modification') return;
-
-            const indicator = document.getElementById('sync-status');
-            indicator.style.display = 'block';
-            indicator.innerText = "🔄 Recherche du modèle en base de données...";
-
-            try {
-                const response = await fetch(`/api/velos/${encodeURIComponent(idVelo)}`);
-                if (response.ok) {
-                    const velo = await response.json();
-                    
-                    // Remplissage automatique et transparent de tous les critères
-                    document.getElementById('nom').value = velo.nom || '';
-                    document.getElementById('marque').value = velo.marque || '';
-                    document.getElementById('modele').value = velo.modele || '';
-                    document.getElementById('prix').value = velo.prix || 0;
-                    document.getElementById('categorie').value = velo.categorie || 'Ville';
-                    document.getElementById('image_url').value = velo.image_url || '';
-                    document.getElementById('marque_moteur').value = velo.marque_moteur || '';
-                    document.getElementById('couple_moteur').value = velo.couple_moteur || 0;
-                    document.getElementById('puissance_moteur').value = velo.puissance_moteur || 250;
-                    document.getElementById('energie_batterie').value = velo.energie_batterie || 0;
-                    document.getElementById('autonomie').value = velo.autonomie || 0;
-                    document.getElementById('poids').value = velo.poids || 0.0;
-                    document.getElementById('taille_min').value = velo.taille_min || 150;
-                    document.getElementById('taille_max').value = velo.taille_max || 200;
-                    document.getElementById('suspension').checked = velo.suspension || false;
-                    document.getElementById('description_ia').value = velo.description_ia || '';
-                    
-                    indicator.className = "sync-indicator"
-                    indicator.style.backgroundColor = "#dcfee8";
-                    indicator.style.color = "#166534";
-                    indicator.innerText = "✅ Fiche existante chargée ! Modifiez uniquement les champs souhaités.";
-                } else {
-                    indicator.innerText = "ℹ️ Aucun vélo trouvé avec cet ID. Prêt pour une nouvelle création.";
-                }
-            } catch (err) {
-                indicator.innerText = "❌ Échec de la pré-récupération des données.";
-            }
-        }
-
-        document.getElementById('velo-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const msgBox = document.getElementById('message-box');
-            msgBox.style.display = 'none';
-
-            const mode = document.getElementById('action-mode').value;
-            const endpoint = mode === 'ajout' ? '/api/ajouter-velo' : '/api/modifier-velo';
-
-            const formData = new URLSearchParams();
-            formData.append('id', document.getElementById('id').value);
-            formData.append('nom', document.getElementById('nom').value);
-            formData.append('marque', document.getElementById('marque').value);
-            formData.append('modele', document.getElementById('modele').value);
-            formData.append('prix', document.getElementById('prix').value);
-            formData.append('categorie', document.getElementById('categorie').value);
-            formData.append('image_url', document.getElementById('image_url').value);
-            formData.append('marque_moteur', document.getElementById('marque_moteur').value);
-            formData.append('couple_moteur', document.getElementById('couple_moteur').value);
-            formData.append('puissance_moteur', document.getElementById('puissance_moteur').value);
-            formData.append('energie_batterie', document.getElementById('energie_batterie').value);
-            formData.append('autonomie', document.getElementById('autonomie').value);
-            formData.append('poids', document.getElementById('poids').value);
-            formData.append('taille_min', document.getElementById('taille_min').value);
-            formData.append('taille_max', document.getElementById('taille_max').value);
-            formData.append('suspension', document.getElementById('suspension').checked);
-            formData.append('description_ia', document.getElementById('description_ia').value);
-            formData.append('robot_token_form', document.getElementById('robot_token_form').value);
-
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    msgBox.className = "success";
-                    msgBox.innerText = "🎉 " + data.message;
-                    msgBox.style.display = 'block';
-                    if (mode === 'ajout') document.getElementById('velo-form').reset();
-                } else {
-                    msgBox.className = "error";
-                    msgBox.innerText = "❌ Erreur : " + (data.detail || "Une erreur est survenue.");
-                    msgBox.style.display = 'block';
-                }
-            } catch (err) {
-                msgBox.className = "error";
-                msgBox.innerText = "❌ Impossible de joindre le serveur de base de données.";
-                msgBox.style.display = 'block';
-            }
-        });
-    </script>
+    });
+</script>
 </body>
 </html>
