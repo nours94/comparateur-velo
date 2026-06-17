@@ -4,39 +4,41 @@
     <meta charset="UTF-8">
     <title>Console Admin - Étape 1</title>
     <style>
-        body { font-family: sans-serif; background: #f8fafc; padding: 20px; color: #334155; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; padding: 20px; color: #334155; }
         .box { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; }
-        input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 4px; }
-        button { width: 100%; padding: 12px; background: #d1125b; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        #status { padding: 10px; margin-bottom: 15px; display: none; border-radius: 4px; font-weight: bold; }
-        .info-sync { background: #e0f2fe; color: #0369a1; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; text-transform: uppercase; color: #111d2c; }
+        input, select, textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; }
+        textarea { height: 100px; resize: vertical; }
+        button { width: 100%; padding: 14px; background: #d1125b; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #b00b4a; }
+        #status { padding: 12px; margin-bottom: 15px; display: none; border-radius: 4px; font-weight: bold; }
+        .pink-box { background: #fdf2f8; padding: 15px; border: 1px solid #fbcfe8; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="box">
-    <h2>Gestion du catalogue - Étape 1 (Identité)</h2>
+    <h2>Gestion du catalogue - Secteur Identité</h2>
     <div id="status"></div>
 
     <form id="form-velo">
         <div class="group">
             <label>Jeton de sécurité (ROBOT_TOKEN)</label>
-            <input type="text" id="robot_token_form" required>
+            <input type="text" id="robot_token_form" value="super_secret_token_123" required>
         </div>
 
         <div class="group">
-            <label>Mode opératoire</label>
-            <select id="action-mode" onchange="basculerMode()">
+            <label>Action à réaliser</label>
+            <select id="action-mode">
                 <option value="ajout">Ajouter un nouveau vélo</option>
-                <option value="modification">Modifier un vélo existant (Auto-remplissage)</option>
+                <option value="modification">Mettre à jour un vélo existant (Modification)</option>
             </select>
         </div>
 
         <div class="group">
-            <label>ID unique du vélo</label>
-            <input type="text" id="id" required placeholder="ex: nakamura-e-crossover" onchange="chargerDonneesExistantes()">
+            <label>Identifiant unique (ID)</label>
+            <input type="text" id="id" required placeholder="ex: nakamura-e-crossover">
         </div>
 
         <div class="group">
@@ -44,10 +46,10 @@
             <input type="text" id="nom" required>
         </div>
 
-        <div class="group" style="background: #fdf2f8; padding: 10px; border: 1px solid #fbcfe8; border-radius: 4px;">
+        <div class="group pink-box">
             <label style="color: #d1125b;">[NOUVEAU] Marque</label>
             <input type="text" id="marque" placeholder="ex: Nakamura">
-            <label style="color: #d1125b; margin-top:5px;">[NOUVEAU] Modèle</label>
+            <label style="color: #d1125b; margin-top: 10px;">[NOUVEAU] Modèle</label>
             <input type="text" id="modele" placeholder="ex: E-Crossover XV">
         </div>
 
@@ -57,68 +59,57 @@
         </div>
 
         <div class="group">
-            <label>Infos Moteur</label>
+            <label>Caractéristiques Moteur</label>
             <input type="text" id="moteur">
         </div>
 
         <div class="group">
-            <label>Infos Batterie</label>
+            <label>Capacité Batterie</label>
             <input type="text" id="batterie">
         </div>
 
         <div class="group">
-            <label>Description IA</label>
+            <label>Analyse de l'expert IA</label>
             <textarea id="description_ia"></textarea>
         </div>
 
         <div class="group">
-            <label>URL Image</label>
+            <label>URL de l'image (Lien internet)</label>
             <input type="text" id="image_url">
         </div>
 
-        <button type="submit">Envoyer les données à Supabase</button>
+        <button type="submit">Enregistrer les modifications</button>
     </form>
 </div>
 
 <script>
-    function basculerMode() {
-        const mode = document.getElementById('action-mode').value;
-        document.getElementById('id').style.background = mode === 'modification' ? '#e2e8f0' : '#ffffff';
-        if(mode === 'modification') chargerDonneesExistantes();
-    }
-
-    // Pré-remplissage magique pour ne plus avoir à tout retaper !
-    async function chargerDonneesExistantes() {
-        const id = document.getElementById('id').value.trim();
-        const mode = document.getElementById('action-mode').value;
-        if (!id || mode !== 'modification') return;
-
-        const status = document.getElementById('status');
-        status.className = "info-sync";
-        status.innerText = "🔄 Récupération de la fiche actuelle dans Supabase...";
-        status.style.display = "block";
-
-        try {
-            const res = await fetch(`/api/velos/${encodeURIComponent(id)}`);
-            if (res.ok) {
-                const data = await res.json();
-                document.getElementById('nom').value = data.nom || '';
-                document.getElementById('prix').value = data.prix || 0;
-                document.getElementById('moteur').value = data.moteur || '';
-                document.getElementById('batterie').value = data.batterie || '';
-                document.getElementById('description_ia').value = data.description_ia || '';
-                document.getElementById('image_url').value = data.image_url || '';
-                document.getElementById('marque').value = data.marque || '';
-                document.getElementById('modele').value = data.modele || '';
-                status.innerText = "✅ Données actuelles chargées. Modifie uniquement ce que tu veux !";
-            } else {
-                status.innerText = "ℹ️ Aucun vélo trouvé avec cet ID en base de données.";
-            }
-        } catch(e) {
-            status.innerText = "❌ Erreur de connexion avec l'API.";
+    // FONCTION MAGIQUE : Lit l'URL et pré-remplit les cases au chargement de la page
+    function autoRemplirDepuisURL() {
+        const params = new URLSearchParams(window.location.search);
+        
+        // Si on a au moins un ID dans l'URL, c'est qu'on vient du bouton "Modifier"
+        if (params.has('id')) {
+            document.getElementById('action-mode').value = 'modification';
+            document.getElementById('id').value = params.get('id') || '';
+            document.getElementById('nom').value = params.get('nom') || '';
+            document.getElementById('prix').value = params.get('prix') || '0';
+            document.getElementById('moteur').value = params.get('moteur') || '';
+            document.getElementById('batterie').value = params.get('batterie') || '';
+            document.getElementById('description_ia').value = params.get('description_ia') || '';
+            document.getElementById('image_url').value = params.get('image_url') || '';
+            document.getElementById('marque').value = params.get('marque') || '';
+            document.getElementById('modele').value = params.get('modele') || '';
+            
+            // Verrouiller l'ID car on ne doit pas le changer pendant une modification
+            document.getElementById('id').style.background = '#e2e8f0';
+            document.getElementById('id').readOnly = true;
         }
     }
 
+    // Exécuter le remplissage dès que l'interface est prête
+    window.addEventListener('DOMContentLoaded', autoRemplirDepuisURL);
+
+    // Envoi des données au serveur FastAPI
     document.getElementById('form-velo').addEventListener('submit', async (e) => {
         e.preventDefault();
         const mode = document.getElementById('action-mode').value;
@@ -136,18 +127,25 @@
         params.append('modele', document.getElementById('modele').value);
         params.append('robot_token_form', document.getElementById('robot_token_form').value);
 
-        const res = await fetch(endpoint, { method: 'POST', body: params });
-        const resData = await res.json();
-        
         const status = document.getElementById('status');
         status.style.display = "block";
-        if(res.ok) {
-            status.style.background = "#dcfce7"; status.style.color = "#166534";
-            status.innerText = "🎉 " + resData.message;
-            if(mode === 'ajout') document.getElementById('form-velo').reset();
-        } else {
+        status.style.background = "#e0f2fe"; status.style.color = "#0369a1";
+        status.innerText = "⚡ Synchronisation avec Supabase en cours...";
+
+        try {
+            const res = await fetch(endpoint, { method: 'POST', body: params });
+            const resData = await res.json();
+            
+            if(res.ok) {
+                status.style.background = "#dcfce7"; status.style.color = "#166534";
+                status.innerText = "🎉 " + resData.message;
+            } else {
+                status.style.background = "#fee2e2"; status.style.color = "#991b1b";
+                status.innerText = "❌ Erreur : " + (resData.detail || "Impossible de sauvegarder");
+            }
+        } catch (err) {
             status.style.background = "#fee2e2"; status.style.color = "#991b1b";
-            status.innerText = "❌ Erreur : " + resData.detail;
+            status.innerText = "❌ Impossible de joindre le serveur de base de données.";
         }
     });
 </script>
