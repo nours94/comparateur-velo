@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
 # -------------------------------------------------------------------------
-# CONFIGURATION BDD (Lecture dynamique depuis l'environnement Render)
+# CONFIGURATION BDD
 # -------------------------------------------------------------------------
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -21,14 +21,13 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Token de sécurité secret pour valider les requêtes de l'administration et du GPT
 ROBOT_TOKEN = os.getenv("ROBOT_TOKEN", "super_secret_token_123")
 
 # -------------------------------------------------------------------------
-# MODÈLES DE LA BASE DE DONNÉES (SQLAlchemy - Aligné sur 15 critères)
+# MODÈLE DE LA BASE DE DONNÉES (Table : velos)
 # -------------------------------------------------------------------------
 class VeloDB(Base):
-    __tablename__ = "velos"  # Cible la table 'velos' (sans accent, au pluriel)
+    __tablename__ = "velos"  # DOIT correspondre exactement au nom sur Supabase
     identifiant = Column("id", String, primary_key=True, index=True)
     nom = Column(String, nullable=False)
     marque = Column(String, nullable=True)
@@ -39,7 +38,7 @@ class VeloDB(Base):
     puissance_moteur = Column(Integer, default=250)
     energie_batterie = Column(Integer, default=0)
     autonomie = Column(Integer, default=0)
-    categorie = Column(String, nullable=True)  # Ville, VTT, Trekking, Cargo
+    categorie = Column(String, nullable=True)
     poids = Column(Float, default=0.0)
     taille_min = Column(Integer, default=150)
     taille_max = Column(Integer, default=200)
@@ -61,9 +60,9 @@ class ReparateurDB(Base):
 Base.metadata.create_all(bind=engine)
 
 # -------------------------------------------------------------------------
-# INITIALISATION FASTAPI & CONFIGURATION CORS
+# INITIALISATION FASTAPI & CORS
 # -------------------------------------------------------------------------
-app = FastAPI(title="VéloÉlec & Co - API Administrative")
+app = FastAPI(title="VéloÉlec & Co - API Stable")
 
 app.add_middleware(
     CORSMiddleware,
@@ -81,13 +80,12 @@ def get_db():
         db.close()
 
 # -------------------------------------------------------------------------
-# ROUTES DE L'API PUBLIQUE
+# ROUTES DE L'API (LECTURE)
 # -------------------------------------------------------------------------
 @app.get("/api/velos")
 def recuperer_tous_les_velos(db: Session = Depends(get_db)):
     return db.query(VeloDB).all()
 
-# Route technique pour charger individuellement un seul vélo dans l'admin
 @app.get("/api/velos/{id_velo}")
 def recuperer_un_velo(id_velo: str, db: Session = Depends(get_db)):
     velo = db.query(VeloDB).filter(VeloDB.identifiant == id_velo).first()
@@ -99,9 +97,6 @@ def recuperer_un_velo(id_velo: str, db: Session = Depends(get_db)):
 def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
     return db.query(ReparateurDB).all()
 
-# -------------------------------------------------------------------------
-# ROUTE COMPATIBLE GPT PERSONNALISÉ
-# -------------------------------------------------------------------------
 @app.get("/api/ia/catalogue")
 def catalogue_pour_ia(db: Session = Depends(get_db)):
     velos = db.query(VeloDB).all()
@@ -134,7 +129,7 @@ def catalogue_pour_ia(db: Session = Depends(get_db)):
     }
 
 # -------------------------------------------------------------------------
-# TRAITEMENTS ADMIN : ENREGISTREMENTS ET MODIFICATIONS SÉCURISÉES
+# ROUTES DE L'API (ECRITURE)
 # -------------------------------------------------------------------------
 @app.post("/api/ajouter-velo")
 def ajouter_nouveau_velo(
@@ -146,11 +141,11 @@ def ajouter_nouveau_velo(
     image_url: str = Form(None), robot_token_form: str = Form(...), db: Session = Depends(get_db)
 ):
     if robot_token_form != ROBOT_TOKEN:
-        raise HTTPException(status_code=403, detail="Accès refusé : Token secret incorrect.")
+        raise HTTPException(status_code=403, detail="Token incorrect.")
     
     velo_existant = db.query(VeloDB).filter(VeloDB.identifiant == id).first()
     if velo_existant:
-        raise HTTPException(status_code=400, detail="L'identifiant existe déjà.")
+        raise HTTPException(status_code=400, detail="L'ID existe déjà.")
     
     nouveau_velo = VeloDB(
         identifiant=id, nom=nom, marque=marque, modele=modele, prix=prix,
@@ -161,7 +156,7 @@ def ajouter_nouveau_velo(
     )
     db.add(nouveau_velo)
     db.commit()
-    return {"status": "created", "message": f"Le vélo expert '{nom}' a été ajouté avec succès !"}
+    return {"status": "created", "message": f"Le vélo '{nom}' a été ajouté !"}
 
 @app.post("/api/modifier-velo")
 def modifier_velo_existant(
@@ -173,13 +168,12 @@ def modifier_velo_existant(
     image_url: str = Form(None), robot_token_form: str = Form(...), db: Session = Depends(get_db)
 ):
     if robot_token_form != ROBOT_TOKEN:
-        raise HTTPException(status_code=403, detail="Accès refusé : Token secret incorrect.")
+        raise HTTPException(status_code=403, detail="Token incorrect.")
     
     velo = db.query(VeloDB).filter(VeloDB.identifiant == id).first()
     if not velo:
-        raise HTTPException(status_code=404, detail="Vélo introuvable dans Supabase.")
+        raise HTTPException(status_code=404, detail="Vélo introuvable.")
     
-    # Mise à jour de l'ensemble des critères
     velo.nom = nom
     velo.marque = marque
     velo.modele = modele
@@ -198,29 +192,29 @@ def modifier_velo_existant(
     velo.image_url = image_url
     
     db.commit()
-    return {"status": "success", "message": f"Le vélo '{nom}' a été mis à jour dans Supabase !"}
+    return {"status": "success", "message": f"Le vélo '{nom}' a bien été mis à jour !"}
 
 # -------------------------------------------------------------------------
-# INTERFACES VISUELLES
+# INTERFACES
 # -------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 def page_accueil():
     if os.path.exists("index.html"):
         with open("index.html", "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return "<h1>⚡ Serveur FastAPI actif (index.html manquant)</h1>"
+    return "<h1>⚡ Serveur FastAPI actif</h1>"
 
 @app.get("/admin.html")
 def page_administration():
     if os.path.exists("admin.html"):
         return FileResponse("admin.html")
-    raise HTTPException(status_code=404, detail="Le fichier admin.html est introuvable.")
+    raise HTTPException(status_code=404, detail="admin.html introuvable.")
 
 @app.get("/hero-bike.jpg")
 def distribuer_image_hero():
     if os.path.exists("hero-bike.jpg"):
         return FileResponse("hero-bike.jpg")
-    raise HTTPException(status_code=404, detail="Image manquante.")
+    raise HTTPException(status_code=404, detail="Image introuvable.")
 
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
