@@ -2,158 +2,294 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Console Admin - Étape 1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VéloÉlec & Co - Administration</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; padding: 20px; color: #334155; }
-        .box { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; text-transform: uppercase; color: #111d2c; }
-        input, select, textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; }
-        textarea { height: 100px; resize: vertical; }
-        button { width: 100%; padding: 14px; background: #d1125b; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background: #b00b4a; }
-        #status { padding: 12px; margin-bottom: 15px; display: none; border-radius: 4px; font-weight: bold; }
-        .pink-box { background: #fdf2f8; padding: 15px; border: 1px solid #fbcfe8; border-radius: 4px; }
+        :root {
+            --dark-blue: #111d2c;
+            --pink-accent: #d1125b;
+            --pink-hover: #b00b4a;
+            --text-dark: #2c3e50;
+            --bg-light: #f8fafc;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 15px 20px;
+        }
+
+        .header-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--dark-blue);
+            text-decoration: none;
+        }
+        .logo span { color: var(--pink-accent); }
+
+        .back-btn {
+            color: var(--dark-blue);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        h1 { font-size: 24px; color: var(--dark-blue); margin: 0 0 30px 0; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            color: var(--dark-blue);
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], input[type="password"], input[type="number"], textarea, select {
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--pink-accent);
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(209, 18, 91, 0.1);
+        }
+
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        .btn-submit {
+            background-color: var(--pink-accent);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--pink-hover);
+        }
+
+        #message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .success { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .pink-box { background: #fdf2f8; padding: 15px; border: 1px solid #fbcfe8; border-radius: 6px; grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>Gestion du catalogue - Secteur Identité</h2>
-    <div id="status"></div>
-
-    <form id="form-velo">
-        <div class="group">
-            <label>Jeton de sécurité (ROBOT_TOKEN)</label>
-            <input type="password" id="robot_token_form" value="super_secret_token_123" required autocomplete="current-password">
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">VéloÉlec<span>&Co</span></a>
+            <a href="/" class="back-btn">← Retour au site</a>
         </div>
+    </header>
 
-        <div class="group">
-            <label>Action à réaliser</label>
-            <select id="action-mode">
-                <option value="ajout">Ajouter un nouveau vélo</option>
-                <option value="modification">Mettre à jour un vélo existant (Modification)</option>
-            </select>
-        </div>
-
-        <div class="group">
-            <label>Identifiant unique (ID)</label>
-            <input type="text" id="id" required placeholder="ex: nakamura-e-crossover">
-        </div>
-
-        <div class="group">
-            <label>Nom du vélo</label>
-            <input type="text" id="nom" required>
-        </div>
-
-        <div class="group pink-box">
-            <label style="color: #d1125b;">[NOUVEAU] Marque</label>
-            <input type="text" id="marque" placeholder="ex: Nakamura">
-            <label style="color: #d1125b; margin-top: 10px;">[NOUVEAU] Modèle</label>
-            <input type="text" id="modele" placeholder="ex: E-Crossover XV">
-        </div>
-
-        <div class="group">
-            <label>Prix (€)</label>
-            <input type="number" id="prix" value="0">
-        </div>
-
-        <div class="group">
-            <label>Caractéristiques Moteur</label>
-            <input type="text" id="moteur">
-        </div>
-
-        <div class="group">
-            <label>Capacité Batterie</label>
-            <input type="text" id="batterie">
-        </div>
-
-        <div class="group">
-            <label>Analyse de l'expert IA</label>
-            <textarea id="description_ia"></textarea>
-        </div>
-
-        <div class="group">
-            <label>URL de l'image (Lien internet)</label>
-            <input type="text" id="image_url">
-        </div>
-
-        <button type="submit">Enregistrer les modifications</button>
-    </form>
-</div>
-
-<script>
-    // Script intelligent à tolérance de panne pour l'URL
-    function autoRemplirDepuisURL() {
-        const params = new URLSearchParams(window.location.search);
+    <div class="container">
+        <h1>Console d'administration</h1>
         
-        if (params.has('id')) {
-            document.getElementById('action-mode').value = 'modification';
-            
-            // Remplissage avec gestion des alias d'URL
-            document.getElementById('id').value = params.get('id') || '';
-            document.getElementById('nom').value = params.get('nom') || '';
-            document.getElementById('prix').value = params.get('prix') || '0';
-            
-            // Accepte indifféremment 'moteur' ou 'caracteristiques_moteur'
-            document.getElementById('moteur').value = params.get('moteur') || params.get('caracteristiques_moteur') || '';
-            
-            // Accepte indifféremment 'batterie' ou 'capacite_batterie'
-            document.getElementById('batterie').value = params.get('batterie') || params.get('capacite_batterie') || '';
-            
-            // Accepte indifféremment 'description_ia' ou 'description'
-            document.getElementById('description_ia').value = params.get('description_ia') || params.get('description') || '';
-            
-            document.getElementById('image_url').value = params.get('image_url') || '';
-            document.getElementById('marque').value = params.get('marque') || '';
-            document.getElementById('modele').value = params.get('modele') || '';
-            
-            // Verrouillage visuel de l'ID pour la modification
-            document.getElementById('id').style.background = '#e2e8f0';
-            document.getElementById('id').readOnly = true;
-        }
-    }
+        <form id="veloForm">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="robot_token_form">Clé Secrète de Sécurité (ROBOT_TOKEN)</label>
+                    <input type="password" id="robot_token_form" required value="super_secret_token_123">
+                </div>
 
-    window.addEventListener('DOMContentLoaded', autoRemplirDepuisURL);
+                <div class="form-group">
+                    <label for="id">Identifiant Unique (ID)</label>
+                    <input type="text" id="id" required placeholder="ex: rockrider-e-st-100">
+                </div>
 
-    document.getElementById('form-velo').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const mode = document.getElementById('action-mode').value;
-        const endpoint = mode === 'ajout' ? '/api/ajouter-velo' : '/api/modifier-velo';
+                <div class="form-group">
+                    <label for="nom">Nom du Vélo</label>
+                    <input type="text" id="nom" required>
+                </div>
 
-        const params = new URLSearchParams();
-        params.append('id', document.getElementById('id').value);
-        params.append('nom', document.getElementById('nom').value);
-        params.append('prix', document.getElementById('prix').value);
-        params.append('moteur', document.getElementById('moteur').value);
-        params.append('batterie', document.getElementById('batterie').value);
-        params.append('description_ia', document.getElementById('description_ia').value);
-        params.append('image_url', document.getElementById('image_url').value);
-        params.append('marque', document.getElementById('marque').value);
-        params.append('modele', document.getElementById('modele').value);
-        params.append('robot_token_form', document.getElementById('robot_token_form').value);
+                <div class="pink-box">
+                    <div class="form-group">
+                        <label for="marque" style="color: var(--pink-accent);">[NOUVEAU] Marque</label>
+                        <input type="text" id="marque" placeholder="ex: Nakamura">
+                    </div>
+                    <div class="form-group">
+                        <label for="modele" style="color: var(--pink-accent);">[NOUVEAU] Modèle</label>
+                        <input type="text" id="modele" placeholder="ex: E-Crossover XV">
+                    </div>
+                </div>
 
-        const status = document.getElementById('status');
-        status.style.display = "block";
-        status.style.background = "#e0f2fe"; status.style.color = "#0369a1";
-        status.innerText = "⚡ Synchronisation avec Supabase en cours...";
+                <div class="form-group">
+                    <label for="prix">Prix (€)</label>
+                    <input type="number" id="prix" required>
+                </div>
 
-        try {
-            const res = await fetch(endpoint, { method: 'POST', body: params });
-            const resData = await res.json();
+                <div class="form-group">
+                    <label for="image_url">URL de l'Image</label>
+                    <input type="text" id="image_url">
+                </div>
+
+                <div class="form-group">
+                    <label for="moteur">Caractéristiques Moteur</label>
+                    <input type="text" id="moteur">
+                </div>
+
+                <div class="form-group">
+                    <label for="batterie">Capacité Batterie</label>
+                    <input type="text" id="batterie">
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="description_ia">Analyse de l'Expert IA</label>
+                    <textarea id="description_ia"></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="action-mode">Action à réaliser</label>
+                    <select id="action-mode">
+                        <option value="ajout">Ajouter un nouveau vélo</option>
+                        <option value="modification">Mettre à jour un vélo existant (Modification)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Enregistrer les modifications</button>
+        </form>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        // Lecture automatique des paramètres de l'URL au démarrage
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
             
-            if(res.ok) {
-                status.style.background = "#dcfce7"; status.style.color = "#166534";
-                status.innerText = "🎉 " + resData.message;
-            } else {
-                status.style.background = "#fee2e2"; status.style.color = "#991b1b";
-                status.innerText = "❌ Erreur : " + (resData.detail || "Impossible de sauvegarder");
+            if (params.has('id')) {
+                document.getElementById('action-mode').value = 'modification';
+                
+                // On remplit les champs un par un
+                document.getElementById('id').value = params.get('id') || '';
+                document.getElementById('nom').value = params.get('nom') || params.get('nom_velo') || '';
+                document.getElementById('prix').value = params.get('prix') || '';
+                document.getElementById('image_url').value = params.get('image_url') || '';
+                document.getElementById('moteur').value = params.get('moteur') || params.get('caracteristiques_moteur') || '';
+                document.getElementById('batterie').value = params.get('batterie') || params.get('capacite_batterie') || '';
+                document.getElementById('description_ia').value = params.get('description_ia') || '';
+                document.getElementById('marque').value = params.get('marque') || '';
+                document.getElementById('modele').value = params.get('modele') || '';
+
+                // Griser l'ID en mode modification
+                document.getElementById('id').style.backgroundColor = '#e2e8f0';
+                document.getElementById('id').readOnly = true;
             }
-        } catch (err) {
-            status.style.background = "#fee2e2"; status.style.color = "#991b1b";
-            status.innerText = "❌ Impossible de joindre le serveur de base de données.";
-        }
-    });
-</script>
+        });
+
+        // Envoi des données vers FastAPI
+        document.getElementById('veloForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const mode = document.getElementById('action-mode').value;
+            const endpoint = mode === 'ajout' ? '/api/ajouter-velo' : '/api/modifier-velo';
+            
+            const formData = new URLSearchParams();
+            formData.append('id', document.getElementById('id').value);
+            formData.append('nom', document.getElementById('nom').value);
+            formData.append('prix', document.getElementById('prix').value);
+            formData.append('moteur', document.getElementById('moteur').value);
+            formData.append('batterie', document.getElementById('batterie').value);
+            formData.append('description_ia', document.getElementById('description_ia').value);
+            formData.append('image_url', document.getElementById('image_url').value);
+            formData.append('marque', document.getElementById('marque').value);
+            formData.append('modele', document.getElementById('modele').value);
+            formData.append('robot_token_form', document.getElementById('robot_token_form').value);
+
+            const messageDiv = document.getElementById('message');
+            messageDiv.style.display = 'block';
+            messageDiv.className = '';
+            messageDiv.innerText = 'Envoi en cours vers Supabase...';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.className = 'success';
+                    messageDiv.innerText = '🎉 ' + data.message;
+                } else {
+                    messageDiv.className = 'error';
+                    messageDiv.innerText = '❌ Erreur : ' + (data.detail || 'Une erreur est survenue.');
+                }
+            } catch (error) {
+                messageDiv.className = 'error';
+                messageDiv.innerText = '❌ Impossible de contacter le serveur de base de données.';
+            }
+        });
+    </script>
 </body>
 </html>
