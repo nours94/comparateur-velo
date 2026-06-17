@@ -165,8 +165,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="nom">Nom du Vélo</label>
-                    <input type="text" id="nom" required>
+                    <label for="nom_velo">Nom du Vélo</label>
+                    <input type="text" id="nom_velo" required>
                 </div>
 
                 <div class="pink-box">
@@ -191,13 +191,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="moteur">Caractéristiques Moteur</label>
-                    <input type="text" id="moteur">
+                    <label for="caracteristiques_moteur">Caractéristiques Moteur</label>
+                    <input type="text" id="caracteristiques_moteur">
                 </div>
 
                 <div class="form-group">
-                    <label for="batterie">Capacité Batterie</label>
-                    <input type="text" id="batterie">
+                    <label for="capacite_batterie">Capacité Batterie</label>
+                    <input type="text" id="capacite_batterie">
                 </div>
 
                 <div class="form-group full-width">
@@ -221,27 +221,51 @@
     </div>
 
     <script>
-        // Lecture automatique des paramètres de l'URL au démarrage
-        window.addEventListener('DOMContentLoaded', () => {
+        // RÉCUPÉRATION DIRECTE DEPUIS L'API POUR ÉVITER LES PROBLÈMES D'URL
+        window.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
+            const idVelo = params.get('id');
             
-            if (params.has('id')) {
+            if (idVelo) {
                 document.getElementById('action-mode').value = 'modification';
+                document.getElementById('id').value = idVelo;
                 
-                // On remplit les champs un par un
-                document.getElementById('id').value = params.get('id') || '';
-                document.getElementById('nom').value = params.get('nom') || params.get('nom_velo') || '';
-                document.getElementById('prix').value = params.get('prix') || '';
-                document.getElementById('image_url').value = params.get('image_url') || '';
-                document.getElementById('moteur').value = params.get('moteur') || params.get('caracteristiques_moteur') || '';
-                document.getElementById('batterie').value = params.get('batterie') || params.get('capacite_batterie') || '';
-                document.getElementById('description_ia').value = params.get('description_ia') || '';
-                document.getElementById('marque').value = params.get('marque') || '';
-                document.getElementById('modele').value = params.get('modele') || '';
-
-                // Griser l'ID en mode modification
+                // Griser l'ID
                 document.getElementById('id').style.backgroundColor = '#e2e8f0';
                 document.getElementById('id').readOnly = true;
+
+                const messageDiv = document.getElementById('message');
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'success';
+                messageDiv.style.backgroundColor = '#e0f2fe';
+                messageDiv.style.color = '#0369a1';
+                messageDiv.innerText = '🔄 Récupération des données en temps réel depuis Supabase...';
+
+                try {
+                    // On interroge l'API pour récupérer la fiche fraîche
+                    const response = await fetch(`/api/velos/${encodeURIComponent(idVelo)}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Remplissage de tes champs d'origine
+                        document.getElementById('nom_velo').value = data.nom || '';
+                        document.getElementById('prix').value = data.prix || 0;
+                        document.getElementById('image_url').value = data.image_url || '';
+                        document.getElementById('caracteristiques_moteur').value = data.moteur || '';
+                        document.getElementById('capacite_batterie').value = data.batterie || '';
+                        document.getElementById('description_ia').value = data.description_ia || '';
+                        document.getElementById('marque').value = data.marque || '';
+                        document.getElementById('modele').value = data.modele || '';
+                        
+                        messageDiv.style.display = 'none';
+                    } else {
+                        messageDiv.className = 'error';
+                        messageDiv.innerText = '⚠️ Impossible de trouver ce vélo dans la base.';
+                    }
+                } catch (error) {
+                    messageDiv.className = 'error';
+                    messageDiv.innerText = '❌ Erreur lors du chargement des données.';
+                }
             }
         });
 
@@ -254,10 +278,10 @@
             
             const formData = new URLSearchParams();
             formData.append('id', document.getElementById('id').value);
-            formData.append('nom', document.getElementById('nom').value);
+            formData.append('nom', document.getElementById('nom_velo').value); // Transmet bien à l'API
             formData.append('prix', document.getElementById('prix').value);
-            formData.append('moteur', document.getElementById('moteur').value);
-            formData.append('batterie', document.getElementById('batterie').value);
+            formData.append('moteur', document.getElementById('caracteristiques_moteur').value); // Transmet bien à l'API
+            formData.append('batterie', document.getElementById('capacite_batterie').value); // Transmet bien à l'API
             formData.append('description_ia', document.getElementById('description_ia').value);
             formData.append('image_url', document.getElementById('image_url').value);
             formData.append('marque', document.getElementById('marque').value);
