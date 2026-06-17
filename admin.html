@@ -25,7 +25,7 @@
     <form id="form-velo">
         <div class="group">
             <label>Jeton de sécurité (ROBOT_TOKEN)</label>
-            <input type="text" id="robot_token_form" value="super_secret_token_123" required>
+            <input type="password" id="robot_token_form" value="super_secret_token_123" required autocomplete="current-password">
         </div>
 
         <div class="group">
@@ -83,33 +83,39 @@
 </div>
 
 <script>
-    // FONCTION MAGIQUE : Lit l'URL et pré-remplit les cases au chargement de la page
+    // Script intelligent à tolérance de panne pour l'URL
     function autoRemplirDepuisURL() {
         const params = new URLSearchParams(window.location.search);
         
-        // Si on a au moins un ID dans l'URL, c'est qu'on vient du bouton "Modifier"
         if (params.has('id')) {
             document.getElementById('action-mode').value = 'modification';
+            
+            // Remplissage avec gestion des alias d'URL
             document.getElementById('id').value = params.get('id') || '';
             document.getElementById('nom').value = params.get('nom') || '';
             document.getElementById('prix').value = params.get('prix') || '0';
-            document.getElementById('moteur').value = params.get('moteur') || '';
-            document.getElementById('batterie').value = params.get('batterie') || '';
-            document.getElementById('description_ia').value = params.get('description_ia') || '';
+            
+            // Accepte indifféremment 'moteur' ou 'caracteristiques_moteur'
+            document.getElementById('moteur').value = params.get('moteur') || params.get('caracteristiques_moteur') || '';
+            
+            // Accepte indifféremment 'batterie' ou 'capacite_batterie'
+            document.getElementById('batterie').value = params.get('batterie') || params.get('capacite_batterie') || '';
+            
+            // Accepte indifféremment 'description_ia' ou 'description'
+            document.getElementById('description_ia').value = params.get('description_ia') || params.get('description') || '';
+            
             document.getElementById('image_url').value = params.get('image_url') || '';
             document.getElementById('marque').value = params.get('marque') || '';
             document.getElementById('modele').value = params.get('modele') || '';
             
-            // Verrouiller l'ID car on ne doit pas le changer pendant une modification
+            // Verrouillage visuel de l'ID pour la modification
             document.getElementById('id').style.background = '#e2e8f0';
             document.getElementById('id').readOnly = true;
         }
     }
 
-    // Exécuter le remplissage dès que l'interface est prête
     window.addEventListener('DOMContentLoaded', autoRemplirDepuisURL);
 
-    // Envoi des données au serveur FastAPI
     document.getElementById('form-velo').addEventListener('submit', async (e) => {
         e.preventDefault();
         const mode = document.getElementById('action-mode').value;
