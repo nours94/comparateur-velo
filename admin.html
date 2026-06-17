@@ -3,249 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin - Comparateur Vélo</title>
+    <title>VéloÉlec & Co - Console d'Administration Supabase</title>
     <style>
+        :root {
+            --dark-blue: #111d2c;
+            --pink-accent: #d1125b;
+            --pink-hover: #b00b4a;
+            --text-dark: #2c3e50;
+            --bg-light: #f8fafc;
+            --border-color: #cbd5e1;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
             margin: 0;
-            padding: 40px 20px;
+            padding: 0;
+        }
+
+        header {
+            background-color: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 15px 20px;
+        }
+
+        .header-container {
+            max-width: 1000px;
+            margin: 0 auto;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
         }
-        .admin-container {
+
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--dark-blue);
+            text-decoration: none;
+        }
+        .logo span { color: var(--pink-accent); }
+
+        .back-btn {
+            color: var(--dark-blue);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            width: 100%;
-            max-width: 600px;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
+
         h1 {
-            color: #2c3e50;
-            margin-bottom: 20px;
             font-size: 24px;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
+            color: var(--dark-blue);
+            margin-top: 0;
+            margin-bottom: 10px;
         }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
+
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #34495e;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            color: var(--dark-blue);
+            letter-spacing: 0.5px;
         }
-        input[type="text"],
-        input[type="number"],
-        textarea {
+
+        input[type="text"], input[type="number"], textarea, select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
+            padding: 12px;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
-            box-sizing: border-box;
             font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border 0.2s;
         }
+
+        input:focus, textarea:focus {
+            border-color: var(--pink-accent);
+        }
+
         textarea {
             resize: vertical;
             height: 100px;
         }
-        .info-note {
-            font-size: 12px;
-            color: #7f8c8d;
-            margin-top: 4px;
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
+
         .btn-submit {
-            background-color: #3498db;
+            background-color: var(--pink-accent);
             color: white;
             border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
+            padding: 14px;
             width: 100%;
-            margin-top: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
             transition: background 0.2s;
+            margin-top: 10px;
         }
-        .btn-submit:hover {
-            background-color: #2980b9;
-        }
-        .back-link {
-            display: block;
-            text-align: center;
+
+        .btn-submit:hover { background-color: var(--pink-hover); }
+
+        #message-box {
             margin-top: 20px;
-            color: #7f8c8d;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .back-link:hover {
-            color: #2c3e50;
-        }
-        #message-retour {
-            margin-top: 15px;
-            padding: 10px;
+            padding: 15px;
             border-radius: 6px;
             display: none;
-            font-weight: bold;
-            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
         }
+
+        .success { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     </style>
 </head>
 <body>
 
-<div class="admin-container">
-    <h1 id="form-title">➕ Ajouter un nouveau vélo</h1>
-    
-    <form id="velo-form" onsubmit="envoyerFormulaire(event)">
-        
-        <div class="form-group">
-            <label for="id">Identifiant Unique (ID) :</label>
-            <input type="text" id="id" name="id" placeholder="ex: specialized-turbo-creo" required>
-            <div id="id-note" class="info-note">Cet identifiant sert de clé primaire. Il ne doit pas contenir d'espaces (utilisez des tirets).</div>
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">VéloÉlec<span>&Co</span> / Admin</a>
+            <a href="/" class="back-btn">← Retour au site</a>
         </div>
+    </header>
 
-        <div class="form-group">
-            <label for="nom">Nom du Vélo :</label>
-            <input type="text" id="nom" name="nom" placeholder="ex: Turbo Creo 2 Comp" required>
-        </div>
+    <div class="container">
+        <h1 id="form-title">Ajouter un nouveau vélo</h1>
+        <p class="subtitle">Remplissez les champs ci-dessous pour mettre à jour la table Supabase en temps réel.</p>
 
-        <div class="form-group">
-            <label for="prix">Prix (€) :</label>
-            <input type="number" id="prix" name="prix" placeholder="ex: 6000" min="0" required>
-        </div>
+        <form id="velo-form">
+            <!-- Sécurité Token -->
+            <div class="form-group">
+                <label for="robot_token_form">Clé de Sécurité Admin (ROBOT_TOKEN)</label>
+                <input type="text" id="robot_token_form" required placeholder="Entrez le token secret configuré sur Render">
+            </div>
 
-        <div class="form-group">
-            <label for="moteur">Modèle du Moteur :</label>
-            <input type="text" id="moteur" name="moteur" placeholder="ex: Specialized SL 1.2, 50 Nm">
-        </div>
+            <!-- ID et Nom -->
+            <div class="row">
+                <div class="form-group">
+                    <label for="id">Identifiant Unique (ID)</label>
+                    <input type="text" id="id" required placeholder="ex: rockrider-e-st100">
+                </div>
+                <div class="form-group">
+                    <label for="nom">Nom du Vélo</label>
+                    <input type="text" id="nom" required placeholder="ex: Decathlon Rockrider E-ST 100">
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label for="batterie">Capacité Batterie :</label>
-            <input type="text" id="batterie" name="batterie" placeholder="ex: 320 Wh">
-        </div>
+            <!-- Prix et Image -->
+            <div class="row">
+                <div class="form-group">
+                    <label for="prix">Prix (€)</label>
+                    <input type="number" id="prix" value="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="image_url">URL de l'image (Lien internet)</label>
+                    <input type="text" id="image_url" placeholder="https://images.unsplash.com/... ou blanc">
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label for="description_ia">Analyse & Description (IA) :</label>
-            <textarea id="description_ia" name="description_ia" placeholder="Points forts, autonomie estimée..."></textarea>
-        </div>
+            <!-- Moteur et Batterie -->
+            <div class="row">
+                <div class="form-group">
+                    <label for="moteur">Caractéristiques Moteur</label>
+                    <input type="text" id="moteur" placeholder="ex: Moteur central Brose Drive T 70Nm">
+                </div>
+                <div class="form-group">
+                    <label for="batterie">Capacité Batterie</label>
+                    <input type="text" id="batterie" placeholder="ex: 500 Wh">
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label for="image_url">Lien de l'image (URL) :</label>
-            <input type="text" id="image_url" name="image_url" placeholder="https://exemple.com/image.jpg">
-        </div>
+            <!-- Description / Analyse IA -->
+            <div class="form-group">
+                <label for="description_ia">Analyse de l'expert IA (Une ligne par puce ou séparé par //)</label>
+                <textarea id="description_ia" placeholder="Idéal pour débuter le VTT électrique&#10;Un excellent rapport qualité/prix urbain"></textarea>
+            </div>
 
-        <div class="form-group">
-            <label for="robot_token_form">Clé Secrète de Sécurité (ROBOT_TOKEN) :</label>
-            <input type="text" id="robot_token_form" name="robot_token_form" placeholder="Entrez le token configuré" required>
-        </div>
+            <!-- Choix Action dynamique -->
+            <div class="form-group">
+                <label for="action-mode">Action à réaliser</label>
+                <select id="action-mode" onchange="changerModeFormulaire()">
+                    <option value="ajout">Créer une nouvelle entrée (Ajout)</option>
+                    <option value="modification">Mettre à jour un vélo existant (Modification)</option>
+                </select>
+            </div>
 
-        <button type="submit" id="submit-btn" class="btn-submit">🚀 Ajouter au catalogue</button>
-    </form>
+            <button type="submit" class="btn-submit" id="btn-text">Enregistrer dans Supabase</button>
+        </form>
 
-    <div id="message-retour"></div>
+        <div id="message-box"></div>
+    </div>
 
-    <a href="/" class="back-link">⬅️ Retourner à l'accueil du comparateur</a>
-</div>
-
-<script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const title = document.getElementById('form-title');
-    const submitBtn = document.getElementById('submit-btn');
-    const idInput = document.getElementById('id');
-    const idNote = document.getElementById('id-note');
-
-    // Détermination de l'endpoint cible par défaut
-    let endpointCible = "/api/ajouter-velo";
-
-    if (urlParams.has('id')) {
-        // Mode Modification activé
-        endpointCible = "/api/modifier-velo";
-        title.innerHTML = "⚙️ Modifier le vélo existant";
-        submitBtn.innerHTML = "💾 Sauvegarder les modifications";
-        submitBtn.style.backgroundColor = '#e67e22';
-        
-        // On remplit et on passe en readonly total
-        idInput.value = urlParams.get('id');
-        idInput.readOnly = true;
-        idInput.style.backgroundColor = '#e8ecef';
-        idInput.style.cursor = 'not-allowed';
-        
-        idNote.innerHTML = "🔒 Cet ID est verrouillé pour mettre à jour la bonne fiche dans la base de données.";
-        idNote.style.color = '#e67e22';
-        
-        // Pré-remplissage automatique des données depuis les paramètres URL
-        if(urlParams.has('nom')) document.getElementById('nom').value = urlParams.get('nom');
-        if(urlParams.has('prix')) document.getElementById('prix').value = urlParams.get('prix');
-        if(urlParams.has('moteur')) document.getElementById('moteur').value = urlParams.get('moteur');
-        if(urlParams.has('batterie')) document.getElementById('batterie').value = urlParams.get('batterie');
-        if(urlParams.has('description_ia')) document.getElementById('description_ia').value = urlParams.get('description_ia');
-        if(urlParams.has('image_url')) document.getElementById('image_url').value = urlParams.get('image_url');
-    }
-
-    // Gestion de l'envoi via JavaScript (Fetch) pour s'assurer que TOUS les champs partent
-    async function envoyerFormulaire(event) {
-        event.preventDefault(); // Bloque le rechargement brut de la page HTML
-        
-        const msgDiv = document.getElementById('message-retour');
-        msgDiv.style.display = 'none';
-
-        // Capturer les données en ignorant les contraintes de blocage du navigateur
-        const formData = new FormData();
-        formData.append('id', idInput.value); // On force la récupération de la valeur de l'ID ici !
-        formData.append('nom', document.getElementById('nom').value);
-        formData.append('prix', document.getElementById('prix').value);
-        formData.append('moteur', document.getElementById('moteur').value);
-        formData.append('batterie', document.getElementById('batterie').value);
-        formData.append('description_ia', document.getElementById('description_ia').value);
-        formData.append('image_url', document.getElementById('image_url').value);
-        formData.append('robot_token_form', document.getElementById('robot_token_form').value);
-
-        try {
-            const response = await fetch(endpointCible, {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                msgDiv.style.backgroundColor = '#d4edda';
-                msgDiv.style.color = '#155724';
-                msgDiv.innerHTML = data.message || "Opération réussie ! 🎉";
-                msgDiv.style.display = 'block';
-                
-                // Si c'était un ajout, on vide le formulaire (sauf le token)
-                if (endpointCible === "/api/ajouter-velo") {
-                    document.getElementById('id').value = '';
-                    document.getElementById('nom').value = '';
-                    document.getElementById('prix').value = '';
-                    document.getElementById('moteur').value = '';
-                    document.getElementById('batterie').value = '';
-                    document.getElementById('description_ia').value = '';
-                    document.getElementById('image_url').value = '';
-                }
-            } else {
-                // Gestion fine des erreurs FastAPI reçues
-                msgDiv.style.backgroundColor = '#f8d7da';
-                msgDiv.style.color = '#721c24';
-                
-                if (data.detail && typeof data.detail === 'object') {
-                    msgDiv.innerHTML = "❌ Erreur de validation : " + JSON.stringify(data.detail);
-                } else {
-                    msgDiv.innerHTML = "❌ Erreur : " + (data.detail || "Une erreur est survenue.");
-                }
-                msgDiv.style.display = 'block';
+    <script>
+        // Détection automatique si on passe un ID dans l'URL (ex: admin.html?id=rockrider)
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const idParam = urlParams.get('id');
+            if (idParam) {
+                document.getElementById('id').value = idParam;
+                document.getElementById('action-mode').value = 'modification';
+                changerModeFormulaire();
             }
-        } catch (error) {
-            msgDiv.style.backgroundColor = '#f8d7da';
-            msgDiv.style.color = '#721c24';
-            msgDiv.innerHTML = "❌ Impossible de joindre le serveur de déploiement.";
-            msgDiv.style.display = 'block';
-        }
-    }
-</script>
+        };
 
+        function changerModeFormulaire() {
+            const mode = document.getElementById('action-mode').value;
+            const titre = document.getElementById('form-title');
+            const bouton = document.getElementById('btn-text');
+            const inputId = document.getElementById('id');
+
+            if (mode === 'modification') {
+                titre.innerText = "Modifier un vélo existant";
+                bouton.innerText = "Enregistrer les modifications";
+                inputId.style.backgroundColor = "#f1f5f9";
+                alert("Rappel : Pour une modification, l'ID saisi doit être strictement identique à celui présent dans Supabase.");
+            } else {
+                titre.innerText = "Ajouter un nouveau vélo";
+                bouton.innerText = "Enregistrer dans Supabase";
+                inputId.style.backgroundColor = "#ffffff";
+            }
+        }
+
+        document.getElementById('velo-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const msgBox = document.getElementById('message-box');
+            msgBox.style.display = 'none';
+
+            const mode = document.getElementById('action-mode').value;
+            const endpoint = mode === 'ajout' ? '/api/ajouter-velo' : '/api/modifier-velo';
+
+            // Préparation des données au format Form (URL Encoded) requis par l'API
+            const formData = new URLSearchParams();
+            formData.append('id', document.getElementById('id').value);
+            formData.append('nom', document.getElementById('nom').value);
+            formData.append('prix', document.getElementById('prix').value);
+            formData.append('image_url', document.getElementById('image_url').value);
+            formData.append('moteur', document.getElementById('moteur').value);
+            formData.append('batterie', document.getElementById('batterie').value);
+            formData.append('description_ia', document.getElementById('description_ia').value);
+            formData.append('robot_token_form', document.getElementById('robot_token_form').value);
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    msgBox.className = "success";
+                    msgBox.innerText = "🎉 " + data.message;
+                    msgBox.style.display = 'block';
+                    if(mode === 'ajout') document.getElementById('velo-form').reset();
+                } else {
+                    msgBox.className = "error";
+                    msgBox.innerText = "❌ Erreur : " + (data.detail || "Une erreur est survenue.");
+                    msgBox.style.display = 'block';
+                }
+            } catch (err) {
+                msgBox.className = "error";
+                msgBox.innerText = "❌ Impossible de joindre le serveur FastAPI.";
+                msgBox.style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>
