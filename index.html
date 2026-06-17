@@ -454,7 +454,8 @@
                             </div>
                         </div>
                         <div class="velo-desc">${descriptionFormatee}</div>
-                        <a href="/admin.html?id=${encodeURIComponent(velo.identifiant)}&nom=${encodeURIComponent(velo.nom)}&prix=${velo.prix}&moteur=${encodeURIComponent(velo.moteur || '')}&batterie=${encodeURIComponent(velo.batterie || '')}&description_ia=${encodeURIComponent(velo.description_ia || '')}&image_url=${encodeURIComponent(velo.image_url || '')}" class="action-edit-btn">Modifier la fiche</a>
+                        // Remplace l'ancienne longue ligne d'envoi d'arguments par celle-ci, propre et efficace :
+                        <a href="/admin.html?id=${encodeURIComponent(velo.identifiant)}" class="action-edit-btn">Modifier la fiche</a>
                     </div>
                 `;
                 grid.appendChild(card);
