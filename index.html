@@ -149,6 +149,14 @@
             gap: 25px;
         }
 
+        .filter-box label {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--dark-blue);
+        }
+
         .filter-group {
             display: flex;
             flex-direction: column;
@@ -338,7 +346,6 @@
 </head>
 <body>
 
-    <!-- BARRE DE NAVIGATION -->
     <header>
         <div class="header-container">
             <a href="/" class="logo-text">VéloÉlec<span>&Co</span></a>
@@ -346,14 +353,12 @@
         </div>
     </header>
 
-    <!-- ACCUEIL HERO BANNER (Nouvelle accroche & fond lumineux) -->
     <section class="hero-section">
         <h1 class="hero-title">Le comparateur 100% indépendant qui trouve le vélo électrique fait pour vous.</h1>
         <p class="hero-subtitle">Autonomie, moteur, prix... Nous décryptons les fiches techniques pour vous dénicher le meilleur rapport qualité/prix.</p>
         <button class="hero-btn" onclick="document.getElementById('search-input').focus();">Trouver mon VAE idéal</button>
     </section>
 
-    <!-- SYSTEME DE FILTRES -->
     <section class="search-container">
         <div class="filter-box">
             <div class="filter-group">
@@ -363,135 +368,4 @@
             <div class="filter-group">
                 <label for="price-range">Budget Maximal : <span id="price-val">6000</span>€</label>
                 <div style="display:flex; align-items:center; height:100%;">
-                    <input type="range" id="price-range" min="0" max="6000" step="100" value="6000" style="width:100%; accent-color: var(--pink-accent);" oninput="filtrerCatalogue()">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- AFFICHAGE DES VAE -->
-    <h2 class="section-title">Nos VAE du quotidien préférés</h2>
-    
-    <main>
-        <div id="loader">Chargement sécurisé des modèles de vélos...</div>
-        <div class="velo-grid" id="velo-container"></div>
-    </main>
-
-    <!-- ZONE TECHNIQUE SCRIPT DE L'IA -->
-    <div id="seo-ia-structured-data"></div>
-
-    <script>
-        let listeLocaleVelos = [];
-
-        async function initialiserCatalogue() {
-            try {
-                const response = await fetch('/api/velos');
-                listeLocaleVelos = await response.json();
-                document.getElementById('loader').style.display = 'none';
-                genererCartesHTML(listeLocaleVelos);
-            } catch (err) {
-                document.getElementById('loader').innerText = "Erreur de synchronisation avec Supabase.";
-            }
-        }
-
-        function formaterDescriptionEnPuces(texte) {
-            if (!texte) return 'Analyse en cours d\'écriture...';
-            if (texte.includes('<li>') || texte.includes('<ul>')) return texte;
-
-            let elements = [];
-            if (texte.includes('//')) {
-                elements = texte.split('//');
-            } else if (texte.includes('\n')) {
-                elements = texte.split('\n');
-            } else {
-                return texte;
-            }
-
-            let htmlListe = '<ul>';
-            elements.forEach(el => {
-                let texteNettoye = el.replace(/^[-\s+*/]+/, '').trim();
-                if (texteNettoye !== "") {
-                    htmlListe += `<li>${texteNettoye}</li>`;
-                }
-            });
-            htmlListe += '</ul>';
-            return htmlListe;
-        }
-
-        function genererCartesHTML(liste) {
-            const grid = document.getElementById('velo-container');
-            const seoContainer = document.getElementById('seo-ia-structured-data');
-            
-            grid.innerHTML = "";
-            seoContainer.innerHTML = "";
-
-            if (liste.length === 0) {
-                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:var(--text-muted);'>Aucun modèle disponible pour ces critères.</p>";
-                return;
-            }
-
-            liste.forEach(velo => {
-                const imageSrc = (velo.image_url && velo.image_url.trim() !== "") ? velo.image_url : "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=600&q=80";
-                const descriptionFormatee = formaterDescriptionEnPuces(velo.description_ia);
-
-                const card = document.createElement('div');
-                card.className = 'velo-card';
-                card.innerHTML = `
-                    <div class="image-container">
-                        <img src="${imageSrc}" class="velo-img" alt="${velo.nom}">
-                        <div class="velo-badge-price">${velo.prix} €</div>
-                    </div>
-                    <div class="velo-body">
-                        <h3 class="velo-name">${velo.nom}</h3>
-                        <div class="tech-specs">
-                            <div class="spec-row">
-                                <span class="spec-label">Moteur</span>
-                                <span class="spec-value">${velo.moteur || 'Standard'}</span>
-                            </div>
-                            <div class="spec-row">
-                                <span class="spec-label">Batterie</span>
-                                <span class="spec-value">${velo.batterie || 'N/A'}</span>
-                            </div>
-                        </div>
-                        <div class="velo-desc">${descriptionFormatee}</div>
-                        <a href="/admin.html?id=${encodeURIComponent(velo.identifiant)}" class="action-edit-btn">Modifier la fiche</a>
-
-                `;
-                grid.appendChild(card);
-
-                const scriptIA = document.createElement('script');
-                scriptIA.type = 'application/ld+json';
-                scriptIA.text = JSON.stringify({
-                    "@context": "https://schema.org/",
-                    "@type": "Product",
-                    "name": velo.nom,
-                    "image": velo.image_url || "",
-                    "description": velo.description_ia || "",
-                    "offers": {
-                        "@type": "Offer",
-                        "priceCurrency": "EUR",
-                        "price": velo.prix.toString()
-                    }
-                });
-                seoContainer.appendChild(scriptIA);
-            });
-        }
-
-        function filtrerCatalogue() {
-            const texte = document.getElementById('search-input').value.toLowerCase();
-            const prixMax = parseInt(document.getElementById('price-range').value);
-            document.getElementById('price-val').innerText = prixMax;
-
-            const resultat = listeLocaleVelos.filter(velo => {
-                const matchTexte = velo.nom.toLowerCase().includes(texte) || (velo.moteur && velo.moteur.toLowerCase().includes(texte));
-                const matchPrix = velo.prix <= prixMax;
-                return matchTexte && matchPrix;
-            });
-
-            genererCartesHTML(resultat);
-        }
-
-        window.onload = initialiserCatalogue;
-    </script>
-</body>
-</html>
+                    <input type="range" id="price-range" min="0" max="6000" step="100" value="6000" style="width:100
