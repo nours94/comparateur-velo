@@ -18,7 +18,10 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-ROBOT_TOKEN = os.getenv("ROBOT_TOKEN", "super_secret_token_123")
+ROBOT_TOKEN = os.getenv("ROBOT_TOKEN")
+
+if not ROBOT_TOKEN:
+    raise RuntimeError("Erreur : la variable ROBOT_TOKEN est introuvable sur Render.")
 
 
 # -------------------------------------------------------------------------
