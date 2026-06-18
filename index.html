@@ -29,7 +29,7 @@ async function initialiserCatalogue(){
     if(!response.ok) throw new Error('Erreur API '+response.status);
     listeLocaleVelos=await response.json();
     document.getElementById('loader').style.display='none';
-    genererCartesHTML(listeLocaleVelos);
+    genererCartesHTML(selectionAccueil(listeLocaleVelos));    
   }catch(err){
     console.error(err);
     document.getElementById('loader').innerText="Erreur de synchronisation avec Supabase.";
@@ -46,6 +46,29 @@ function formaterDescriptionEnPuces(texte){
   elements.forEach(el=>{let t=el.replace(/^[-\s+*/]+/,'').trim(); if(t) htmlListe+=`<li>${t}</li>`;});
   return htmlListe+'</ul>';
 }
+
+function selectionAccueil(liste){
+  const cargos = liste.filter(velo => {
+    const texte = [
+      velo.nom,
+      velo.marque,
+      velo.modele,
+      velo.moteur,
+      velo.batterie,
+      velo.description_ia,
+      velo.description
+    ].filter(Boolean).join(' ').toLowerCase();
+
+    return texte.includes('cargo') || texte.includes('biporteur') || texte.includes('longtail') || texte.includes('famille');
+  });
+
+  const velosNormaux = liste.filter(velo => !cargos.includes(velo));
+
+  const meilleurCargo = cargos.sort((a,b) => Number(b.prix || 0) - Number(a.prix || 0))[0];
+  const meilleurNormal = velosNormaux.sort((a,b) => Number(b.prix || 0) - Number(a.prix || 0))[0];
+
+  return [meilleurNormal, meilleurCargo].filter(Boolean);
+
 function genererCartesHTML(liste){
   const grid=document.getElementById('velo-container');
   const seoContainer=document.getElementById('seo-ia-structured-data');
