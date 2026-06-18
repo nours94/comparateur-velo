@@ -10,7 +10,17 @@
 </head>
 <body>
 <header><div class="header-container"><a href="/" class="logo-text">VéloÉlec<span>&Co</span></a><a href="/admin.html" class="admin-link">Espace Admin</a></div></header>
-<section class="hero-section"><h1 class="hero-title">Le comparateur 100% indépendant qui trouve le vélo électrique fait pour vous.</h1><p class="hero-subtitle">Autonomie, moteur, prix... Nous décryptons les fiches techniques pour vous dénicher le meilleur rapport qualité/prix.</p><button class="hero-btn" onclick="document.getElementById('search-input').focus();">Trouver mon VAE idéal</button></section>
+<section class="hero-section"><h1 class="hero-title">Le comparateur 100% indépendant qui trouve le vélo électrique fait pour vous.</h1><p class="hero-subtitle">Autonomie, moteur, prix... Nous décryptons les fiches techniques pour vous dénicher le meilleur rapport qualité/prix.</p><a 
+  class="hero-btn"
+  href="https://chatgpt.com/g/g-6a314d7ba250819181f81f3fc1ec7c01-veloelec-co"
+  target="_blank"
+  rel="noopener noreferrer">
+  Trouver mon VAE idéal
+</a>
+
+<p style="margin-top:12px;font-size:14px;color:white;">
+  Répondez à quelques questions et notre assistant IA vous conseille les 2 meilleurs vélos du catalogue.
+</p>
 <section class="search-container"><div class="filter-box"><div class="filter-group"><label for="search-input">Recherche par mot-clé</label><input type="text" id="search-input" placeholder="Ex: Rockrider, Moteur Bosch..." oninput="filtrerCatalogue()"></div><div class="filter-group"><label for="price-range">Budget Maximal : <span id="price-val">6000</span>€</label><div style="display:flex;align-items:center;height:100%;"><input type="range" id="price-range" min="0" max="6000" step="100" value="6000" style="width:100%;accent-color:var(--pink-accent);" oninput="filtrerCatalogue()"></div></div></div></section>
 <h2 class="section-title">Nos VAE du quotidien préférés</h2>
 <main><div id="loader">Chargement sécurisé des modèles de vélos...</div><div class="velo-grid" id="velo-container"></div></main>
