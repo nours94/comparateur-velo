@@ -68,6 +68,7 @@ function selectionAccueil(liste){
   const meilleurNormal = velosNormaux.sort((a,b) => Number(b.prix || 0) - Number(a.prix || 0))[0];
 
   return [meilleurNormal, meilleurCargo].filter(Boolean);
+}
 
 function genererCartesHTML(liste){
   const grid=document.getElementById('velo-container');
