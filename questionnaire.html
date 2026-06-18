@@ -37,6 +37,7 @@ select:focus,input:focus{outline:none;border-color:var(--pink);background:white}
 .velo-body{padding:20px}
 .price{display:inline-block;background:var(--dark-blue);color:white;padding:6px 12px;border-radius:4px;font-weight:800;margin-bottom:10px}
 .reason{color:var(--muted);line-height:1.5}
+.resume{background:#fdf2f8;border:1px solid #fbcfe8;padding:18px;border-radius:8px;margin-bottom:25px;line-height:1.6}
 .gpt-link{display:inline-block;margin-top:20px;color:white;background:var(--dark-blue);padding:13px 22px;border-radius:6px;text-decoration:none;font-weight:700}
 @media(max-width:760px){.form-grid,.result-grid,.options{grid-template-columns:1fr}.hero h1{font-size:30px}}
 </style>
@@ -70,18 +71,6 @@ select:focus,input:focus{outline:none;border-color:var(--pink);background:white}
       <div class="form-grid">
 
         <div class="group">
-          <label>Quelle est votre principale raison d’achat ? *</label>
-          <select id="raison" required>
-            <option value="">Sélectionner</option>
-            <option value="remplacer voiture">Remplacer la voiture</option>
-            <option value="trajets quotidiens">Faire des trajets quotidiens</option>
-            <option value="loisirs">Faire des balades / loisirs</option>
-            <option value="sport">Faire du sport / VTT</option>
-            <option value="economies">Réduire mes dépenses de transport</option>
-          </select>
-        </div>
-
-        <div class="group">
           <label>Usage principal souhaité *</label>
           <select id="usage" required>
             <option value="">Sélectionner</option>
@@ -90,6 +79,18 @@ select:focus,input:focus{outline:none;border-color:var(--pink);background:white}
             <option value="famille">Famille / courses</option>
             <option value="vtt">VTT / chemins</option>
             <option value="balade">Balades</option>
+            <option value="cargo">Transport lourd / cargo</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Budget maximal *</label>
+          <select id="budget" required>
+            <option value="">Sélectionner</option>
+            <option value="1000">Moins de 1 000 €</option>
+            <option value="1500">1 000 à 1 500 €</option>
+            <option value="2000">1 500 à 2 000 €</option>
+            <option value="3000">Plus de 2 000 €</option>
           </select>
         </div>
 
@@ -105,13 +106,36 @@ select:focus,input:focus{outline:none;border-color:var(--pink);background:white}
         </div>
 
         <div class="group">
-          <label>Budget maximal *</label>
-          <select id="budget" required>
+          <label>Poids du cycliste *</label>
+          <select id="poids_utilisateur" required>
             <option value="">Sélectionner</option>
-            <option value="1000">Moins de 1 000 €</option>
-            <option value="1500">1 000 à 1 500 €</option>
-            <option value="2000">1 500 à 2 000 €</option>
-            <option value="3000">Plus de 2 000 €</option>
+            <option value="55">Moins de 60 kg</option>
+            <option value="70">60 à 75 kg</option>
+            <option value="85">75 à 90 kg</option>
+            <option value="105">90 à 110 kg</option>
+            <option value="125">Plus de 110 kg</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Charge transportée habituellement *</label>
+          <select id="charge_transport" required>
+            <option value="">Sélectionner</option>
+            <option value="0">Aucune charge</option>
+            <option value="8">Sac / ordinateur</option>
+            <option value="20">Courses régulières</option>
+            <option value="40">Enfant ou matériel important</option>
+            <option value="75">Usage cargo / charge lourde</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Nombre d’enfants transportés</label>
+          <select id="enfants">
+            <option value="0">Aucun</option>
+            <option value="18">1 enfant</option>
+            <option value="36">2 enfants</option>
+            <option value="54">3 enfants ou plus</option>
           </select>
         </div>
 
@@ -148,31 +172,11 @@ select:focus,input:focus{outline:none;border-color:var(--pink);background:white}
         </div>
 
         <div class="group">
-          <label>Besoin de transporter des affaires ? *</label>
-          <select id="transport" required>
-            <option value="">Sélectionner</option>
-            <option value="non">Non</option>
-            <option value="bureau">Oui, affaires de bureau</option>
-            <option value="courses">Oui, courses alimentaires</option>
-          </select>
-        </div>
-
-        <div class="group">
           <label>Devrez-vous porter le vélo ? *</label>
           <select id="porter" required>
             <option value="">Sélectionner</option>
             <option value="non">Non</option>
             <option value="oui">Oui, escaliers ou transport</option>
-          </select>
-        </div>
-
-        <div class="group">
-          <label>Position de conduite préférée *</label>
-          <select id="position" required>
-            <option value="">Sélectionner</option>
-            <option value="droite">Droite et confortable</option>
-            <option value="sportive">Plus sportive</option>
-            <option value="peu importe">Peu importe</option>
           </select>
         </div>
 
@@ -193,6 +197,7 @@ select:focus,input:focus{outline:none;border-color:var(--pink);background:white}
 
   <div class="card result" id="resultat">
     <h2>Vos 2 vélos recommandés</h2>
+    <div class="resume" id="resumeBesoin"></div>
     <div class="result-grid" id="resultGrid"></div>
 
     <a 
@@ -218,8 +223,43 @@ function terrainsChoisis(){
   return Array.from(document.querySelectorAll('input[name="terrain"]:checked')).map(e => e.value);
 }
 
+function extraireCoupleNm(velo){
+  const texte = [
+    velo.moteur,
+    velo.description_ia,
+    velo.description
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  const match = texte.match(/(\d+)\s*nm/);
+  return match ? Number(match[1]) : 0;
+}
+
+function calculerCoupleMinimum(reponses){
+  const poidsTotal = reponses.poidsUtilisateur + reponses.chargeTransport + reponses.enfants;
+  let couple = 40;
+
+  if(poidsTotal > 90) couple += 10;
+  if(poidsTotal > 120) couple += 10;
+  if(poidsTotal > 150) couple += 15;
+
+  if(reponses.cotes === 'vallonne') couple += 10;
+  if(reponses.cotes === 'fortes') couple += 20;
+
+  if(reponses.terrains.includes('chemins')) couple += 10;
+  if(reponses.terrains.includes('sentiers')) couple += 15;
+
+  if(reponses.usage === 'cargo' || reponses.usage === 'famille') couple += 10;
+  if(reponses.assistance === 'forte') couple += 10;
+
+  if(couple < 40) couple = 40;
+  if(couple > 85) couple = 85;
+
+  return couple;
+}
+
 function scoreVelo(velo, reponses){
   let score = 0;
+
   const texte = [
     velo.nom,
     velo.marque,
@@ -231,38 +271,46 @@ function scoreVelo(velo, reponses){
   ].filter(Boolean).join(' ').toLowerCase();
 
   const prix = Number(velo.prix || 0);
+  const coupleVelo = extraireCoupleNm(velo);
+  const coupleMinimum = calculerCoupleMinimum(reponses);
 
   if(prix <= reponses.budget) score += 30;
-  else score -= 50;
+  else score -= 60;
+
+  if(coupleVelo >= coupleMinimum) score += 35;
+  else score -= (coupleMinimum - coupleVelo);
 
   if(reponses.priorite === 'prix' && prix <= 1200) score += 35;
   if(reponses.priorite === 'confort' && (texte.includes('confort') || texte.includes('suspendu'))) score += 30;
   if(reponses.priorite === 'autonomie' && (texte.includes('500 wh') || texte.includes('460 wh'))) score += 25;
-  if(reponses.priorite === 'puissance' && (texte.includes('70nm') || texte.includes('60nm') || texte.includes('central'))) score += 30;
+  if(reponses.priorite === 'puissance' && (coupleVelo >= 60 || texte.includes('central'))) score += 30;
   if(reponses.priorite === 'polyvalence' && (texte.includes('urbain') || texte.includes('polyvalent') || texte.includes('crossover'))) score += 30;
 
   if(['ville','travail','famille'].includes(reponses.usage) && (texte.includes('urbain') || texte.includes('crossover'))) score += 35;
   if(reponses.usage === 'vtt' && (texte.includes('vtt') || texte.includes('rockrider') || texte.includes('trail'))) score += 35;
   if(reponses.usage === 'balade' && (texte.includes('confort') || texte.includes('bonne autonomie') || texte.includes('crossover'))) score += 25;
+  if(reponses.usage === 'cargo' && coupleVelo >= 70) score += 30;
 
   if(reponses.terrains.includes('chemins') || reponses.terrains.includes('sentiers')){
     if(texte.includes('vtt') || texte.includes('rockrider') || texte.includes('suspendu')) score += 30;
   }
-
-  if(reponses.cotes === 'fortes' && (texte.includes('70nm') || texte.includes('60nm') || texte.includes('central'))) score += 30;
-  if(reponses.cotes === 'vallonne' && (texte.includes('60nm') || texte.includes('70nm') || texte.includes('42nm'))) score += 15;
 
   if(reponses.distance >= 25 && (texte.includes('460 wh') || texte.includes('500 wh'))) score += 25;
   if(reponses.distance <= 20 && prix <= 1600) score += 15;
 
   if(reponses.porter === 'oui' && texte.includes('poids élevé')) score -= 25;
 
-  if(reponses.assistance === 'forte' && (texte.includes('60nm') || texte.includes('70nm') || texte.includes('central'))) score += 25;
-
   return score;
 }
 
 function explication(velo, reponses){
+  const coupleVelo = extraireCoupleNm(velo);
+  const coupleMinimum = calculerCoupleMinimum(reponses);
+
+  let phraseCouple = coupleVelo >= coupleMinimum
+    ? `Son couple moteur de ${coupleVelo} Nm est adapté au besoin estimé de ${coupleMinimum} Nm.`
+    : `Son couple moteur de ${coupleVelo} Nm est inférieur au besoin estimé de ${coupleMinimum} Nm, mais il reste proposé car il correspond à d’autres critères.`;
+
   const texte = [
     velo.nom,
     velo.moteur,
@@ -272,26 +320,37 @@ function explication(velo, reponses){
   ].filter(Boolean).join(' ').toLowerCase();
 
   if(texte.includes('crossover')){
-    return "Très bon choix pour les trajets quotidiens, la ville et un usage polyvalent. Son moteur central et sa batterie offrent un bon équilibre entre confort, puissance et autonomie.";
+    return "Très bon choix pour les trajets quotidiens, la ville et un usage polyvalent. " + phraseCouple;
   }
 
   if(texte.includes('e-st 100')){
-    return "Recommandé si votre priorité est le prix. Il convient bien pour débuter en électrique, faire des trajets courts et rouler occasionnellement sur chemins faciles.";
+    return "Recommandé si votre priorité est le prix et que vos trajets restent modérés. " + phraseCouple;
   }
 
   if(texte.includes('e-expl 520')){
-    return "Recommandé si vous cherchez du confort, de la puissance et une bonne capacité sur chemins ou sorties plus sportives. Son tout-suspendu est un vrai avantage sur terrain irrégulier.";
+    return "Recommandé pour le confort, les chemins, les côtes et les sorties plus sportives. " + phraseCouple;
   }
 
-  return "Ce vélo correspond bien à vos réponses selon son prix, son moteur, sa batterie et son usage prévu.";
+  return "Ce vélo correspond bien à vos réponses selon son prix, son moteur, sa batterie et son usage prévu. " + phraseCouple;
 }
 
 function afficherResultats(resultats, reponses){
   const grid = document.getElementById('resultGrid');
+  const resume = document.getElementById('resumeBesoin');
   grid.innerHTML = '';
+
+  const poidsTotal = reponses.poidsUtilisateur + reponses.chargeTransport + reponses.enfants;
+  const coupleMinimum = calculerCoupleMinimum(reponses);
+
+  resume.innerHTML = `
+    <strong>Analyse de votre besoin :</strong><br>
+    Poids total estimé à transporter : <strong>${poidsTotal} kg</strong><br>
+    Couple moteur minimum conseillé : <strong>${coupleMinimum} Nm</strong>
+  `;
 
   resultats.forEach(velo => {
     const image = velo.image_url || 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=600&q=80';
+    const coupleVelo = extraireCoupleNm(velo);
 
     const div = document.createElement('div');
     div.className = 'velo';
@@ -301,6 +360,7 @@ function afficherResultats(resultats, reponses){
         <div class="price">${velo.prix || 0} €</div>
         <h3>${velo.nom || ''}</h3>
         <p><strong>Moteur :</strong> ${velo.moteur || 'Non renseigné'}</p>
+        <p><strong>Couple :</strong> ${coupleVelo || 'Non renseigné'} Nm</p>
         <p><strong>Batterie :</strong> ${velo.batterie || 'Non renseignée'}</p>
         <p class="reason">${explication(velo, reponses)}</p>
       </div>
@@ -320,16 +380,16 @@ document.getElementById('questionnaire').addEventListener('submit', async functi
   }
 
   const reponses = {
-    raison: document.getElementById('raison').value,
     usage: document.getElementById('usage').value,
     distance: Number(document.getElementById('distance').value),
     budget: Number(document.getElementById('budget').value),
+    poidsUtilisateur: Number(document.getElementById('poids_utilisateur').value),
+    chargeTransport: Number(document.getElementById('charge_transport').value),
+    enfants: Number(document.getElementById('enfants').value),
     terrains: terrainsChoisis(),
     cotes: document.getElementById('cotes').value,
     priorite: document.getElementById('priorite').value,
-    transport: document.getElementById('transport').value,
     porter: document.getElementById('porter').value,
-    position: document.getElementById('position').value,
     assistance: document.getElementById('assistance').value
   };
 
