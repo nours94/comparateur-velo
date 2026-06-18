@@ -5,6 +5,9 @@ import hashlib
 import requests
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 VELO_TABLE_NAME = os.getenv("VELO_TABLE_NAME", "vélo")
