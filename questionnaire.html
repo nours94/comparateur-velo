@@ -224,6 +224,10 @@ function terrainsChoisis(){
 }
 
 function extraireCoupleNm(velo){
+  if (velo.couple_moteur) {
+    return Number(velo.couple_moteur);
+  }
+
   const texte = [
     velo.moteur,
     velo.description_ia,
@@ -273,6 +277,8 @@ function scoreVelo(velo, reponses){
   const prix = Number(velo.prix || 0);
   const coupleVelo = extraireCoupleNm(velo);
   const coupleMinimum = calculerCoupleMinimum(reponses);
+  const autonomieVelo = Number(velo.autonomie || 0);
+  const categorieVelo = (velo.categorie || '').toLowerCase();  
 
   if(prix <= reponses.budget) score += 30;
   else score -= 60;
@@ -299,8 +305,13 @@ function scoreVelo(velo, reponses){
   if(reponses.distance <= 20 && prix <= 1600) score += 15;
 
   if(reponses.porter === 'oui' && texte.includes('poids élevé')) score -= 25;
+  if(reponses.usage === 'cargo' && categorieVelo.includes('cargo')) score += 50;
+  if(reponses.usage === 'famille' && categorieVelo.includes('cargo')) score += 35;
 
-  return score;
+  if(reponses.distance >= 40 && autonomieVelo >= 70) score += 30;
+  if(reponses.distance >= 60 && autonomieVelo < 70) score -= 30;    
+
+  return score;     
 }
 
 function explication(velo, reponses){
