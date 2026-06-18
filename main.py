@@ -191,6 +191,16 @@ def catalogue_pour_ia(db: Session = Depends(get_db)):
         ],
     }
 
+# -------------------------------------------------------------------------
+# ROUTE QUESTIONNAIRE VELO
+# -------------------------------------------------------------------------    
+@app.get("/questionnaire.html", response_class=HTMLResponse)
+def page_questionnaire():
+    if os.path.exists("questionnaire.html"):
+        with open("questionnaire.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    raise HTTPException(status_code=404, detail="questionnaire.html introuvable.")
 
 # -------------------------------------------------------------------------
 # ROUTE ADMIN : AJOUT D'UN VÉLO

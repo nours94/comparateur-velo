@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quel vélo électrique est fait pour vous ? - VéloÉlec & Co</title>
+<style>
+:root{--dark-blue:#111d2c;--pink:#d1125b;--pink-hover:#b00b4a;--bg:#f8fafc;--text:#2c3e50;--muted:#64748b}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);margin:0}
+header{background:white;border-bottom:1px solid #e2e8f0;padding:18px 20px}
+.header-container{max-width:1000px;margin:auto;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:24px;font-weight:800;color:var(--dark-blue);text-decoration:none}
+.logo span{color:var(--pink)}
+.back{color:var(--dark-blue);font-weight:600;text-decoration:none}
+.hero{background:linear-gradient(135deg,#111d2c,#1f334d);color:white;text-align:center;padding:60px 20px}
+.hero h1{font-family:Georgia,serif;font-size:38px;margin:0 0 10px}
+.hero .tag{color:var(--pink);font-weight:800;letter-spacing:1px}
+.benefits{margin-top:25px;line-height:1.8}
+.container{max-width:900px;margin:40px auto;padding:0 20px}
+.card{background:white;border-radius:10px;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,.06);margin-bottom:25px}
+h2{color:var(--dark-blue);margin-top:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.group{display:flex;flex-direction:column}
+.full{grid-column:1/-1}
+label{font-weight:700;font-size:14px;margin-bottom:8px;color:var(--dark-blue)}
+select,input{padding:13px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;background:#f8fafc}
+select:focus,input:focus{outline:none;border-color:var(--pink);background:white}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.option{background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:12px}
+.option input{margin-right:8px}
+.btn{background:var(--pink);color:white;border:0;padding:15px 28px;border-radius:6px;font-size:17px;font-weight:800;cursor:pointer;width:100%;margin-top:25px}
+.btn:hover{background:var(--pink-hover)}
+.result{display:none}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:25px}
+.velo{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
+.velo img{width:100%;height:220px;object-fit:cover;background:#e2e8f0}
+.velo-body{padding:20px}
+.price{display:inline-block;background:var(--dark-blue);color:white;padding:6px 12px;border-radius:4px;font-weight:800;margin-bottom:10px}
+.reason{color:var(--muted);line-height:1.5}
+.gpt-link{display:inline-block;margin-top:20px;color:white;background:var(--dark-blue);padding:13px 22px;border-radius:6px;text-decoration:none;font-weight:700}
+@media(max-width:760px){.form-grid,.result-grid,.options{grid-template-columns:1fr}.hero h1{font-size:30px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-container">
+    <a href="/" class="logo">VéloÉlec<span>&Co</span></a>
+    <a href="/" class="back">← Retour au site</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="tag">PRENEZ 2 MINUTES</div>
+  <h1>Quel vélo électrique est fait pour vous ?</h1>
+  <p>Répondez au questionnaire ci-dessous et recevez votre recommandation personnalisée immédiatement.</p>
+  <div class="benefits">
+    ✓ Recommandation sur-mesure<br>
+    ✓ Résultat immédiat<br>
+    ✓ 100% gratuit
+  </div>
+</section>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Votre usage</h2>
+
+    <form id="questionnaire">
+      <div class="form-grid">
+
+        <div class="group">
+          <label>Quelle est votre principale raison d’achat ? *</label>
+          <select id="raison" required>
+            <option value="">Sélectionner</option>
+            <option value="remplacer voiture">Remplacer la voiture</option>
+            <option value="trajets quotidiens">Faire des trajets quotidiens</option>
+            <option value="loisirs">Faire des balades / loisirs</option>
+            <option value="sport">Faire du sport / VTT</option>
+            <option value="economies">Réduire mes dépenses de transport</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Usage principal souhaité *</label>
+          <select id="usage" required>
+            <option value="">Sélectionner</option>
+            <option value="ville">Ville</option>
+            <option value="travail">Trajets domicile-travail</option>
+            <option value="famille">Famille / courses</option>
+            <option value="vtt">VTT / chemins</option>
+            <option value="balade">Balades</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Distance moyenne par jour *</label>
+          <select id="distance" required>
+            <option value="">Sélectionner</option>
+            <option value="10">Moins de 10 km</option>
+            <option value="20">10 à 25 km</option>
+            <option value="40">25 à 50 km</option>
+            <option value="60">Plus de 50 km</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Budget maximal *</label>
+          <select id="budget" required>
+            <option value="">Sélectionner</option>
+            <option value="1000">Moins de 1 000 €</option>
+            <option value="1500">1 000 à 1 500 €</option>
+            <option value="2000">1 500 à 2 000 €</option>
+            <option value="3000">Plus de 2 000 €</option>
+          </select>
+        </div>
+
+        <div class="group full">
+          <label>Sur quel type de terrain allez-vous rouler ? *</label>
+          <div class="options">
+            <label class="option"><input type="checkbox" name="terrain" value="route"> Route / goudron</label>
+            <label class="option"><input type="checkbox" name="terrain" value="pistes"> Pistes cyclables</label>
+            <label class="option"><input type="checkbox" name="terrain" value="chemins"> Chemins de terre</label>
+            <label class="option"><input type="checkbox" name="terrain" value="sentiers"> Sentiers</label>
+          </div>
+        </div>
+
+        <div class="group">
+          <label>Y a-t-il des côtes ? *</label>
+          <select id="cotes" required>
+            <option value="">Sélectionner</option>
+            <option value="plat">Non, trajet plutôt plat</option>
+            <option value="vallonne">Oui, quelques côtes</option>
+            <option value="fortes">Oui, côtes importantes</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Votre priorité principale *</label>
+          <select id="priorite" required>
+            <option value="">Sélectionner</option>
+            <option value="prix">Prix</option>
+            <option value="confort">Confort</option>
+            <option value="autonomie">Autonomie</option>
+            <option value="puissance">Puissance</option>
+            <option value="polyvalence">Polyvalence</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Besoin de transporter des affaires ? *</label>
+          <select id="transport" required>
+            <option value="">Sélectionner</option>
+            <option value="non">Non</option>
+            <option value="bureau">Oui, affaires de bureau</option>
+            <option value="courses">Oui, courses alimentaires</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Devrez-vous porter le vélo ? *</label>
+          <select id="porter" required>
+            <option value="">Sélectionner</option>
+            <option value="non">Non</option>
+            <option value="oui">Oui, escaliers ou transport</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Position de conduite préférée *</label>
+          <select id="position" required>
+            <option value="">Sélectionner</option>
+            <option value="droite">Droite et confortable</option>
+            <option value="sportive">Plus sportive</option>
+            <option value="peu importe">Peu importe</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label>Niveau d’assistance attendu *</label>
+          <select id="assistance" required>
+            <option value="">Sélectionner</option>
+            <option value="legere">Assistance légère</option>
+            <option value="forte">Assistance puissante</option>
+          </select>
+        </div>
+
+      </div>
+
+      <button class="btn" type="submit">Voir ma recommandation</button>
+    </form>
+  </div>
+
+  <div class="card result" id="resultat">
+    <h2>Vos 2 vélos recommandés</h2>
+    <div class="result-grid" id="resultGrid"></div>
+
+    <a 
+      class="gpt-link"
+      href="https://chatgpt.com/g/g-6a314d7ba250819181f81f3fc1ec7c01-veloelec-co"
+      target="_blank"
+      rel="noopener noreferrer">
+      Affiner avec l’assistant IA
+    </a>
+  </div>
+
+</div>
+
+<script>
+let catalogue = [];
+
+async function chargerCatalogue(){
+  const response = await fetch('/api/velos');
+  catalogue = await response.json();
+}
+
+function terrainsChoisis(){
+  return Array.from(document.querySelectorAll('input[name="terrain"]:checked')).map(e => e.value);
+}
+
+function scoreVelo(velo, reponses){
+  let score = 0;
+  const texte = [
+    velo.nom,
+    velo.marque,
+    velo.modele,
+    velo.moteur,
+    velo.batterie,
+    velo.description_ia,
+    velo.description
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  const prix = Number(velo.prix || 0);
+
+  if(prix <= reponses.budget) score += 30;
+  else score -= 50;
+
+  if(reponses.priorite === 'prix' && prix <= 1200) score += 35;
+  if(reponses.priorite === 'confort' && (texte.includes('confort') || texte.includes('suspendu'))) score += 30;
+  if(reponses.priorite === 'autonomie' && (texte.includes('500 wh') || texte.includes('460 wh'))) score += 25;
+  if(reponses.priorite === 'puissance' && (texte.includes('70nm') || texte.includes('60nm') || texte.includes('central'))) score += 30;
+  if(reponses.priorite === 'polyvalence' && (texte.includes('urbain') || texte.includes('polyvalent') || texte.includes('crossover'))) score += 30;
+
+  if(['ville','travail','famille'].includes(reponses.usage) && (texte.includes('urbain') || texte.includes('crossover'))) score += 35;
+  if(reponses.usage === 'vtt' && (texte.includes('vtt') || texte.includes('rockrider') || texte.includes('trail'))) score += 35;
+  if(reponses.usage === 'balade' && (texte.includes('confort') || texte.includes('bonne autonomie') || texte.includes('crossover'))) score += 25;
+
+  if(reponses.terrains.includes('chemins') || reponses.terrains.includes('sentiers')){
+    if(texte.includes('vtt') || texte.includes('rockrider') || texte.includes('suspendu')) score += 30;
+  }
+
+  if(reponses.cotes === 'fortes' && (texte.includes('70nm') || texte.includes('60nm') || texte.includes('central'))) score += 30;
+  if(reponses.cotes === 'vallonne' && (texte.includes('60nm') || texte.includes('70nm') || texte.includes('42nm'))) score += 15;
+
+  if(reponses.distance >= 25 && (texte.includes('460 wh') || texte.includes('500 wh'))) score += 25;
+  if(reponses.distance <= 20 && prix <= 1600) score += 15;
+
+  if(reponses.porter === 'oui' && texte.includes('poids élevé')) score -= 25;
+
+  if(reponses.assistance === 'forte' && (texte.includes('60nm') || texte.includes('70nm') || texte.includes('central'))) score += 25;
+
+  return score;
+}
+
+function explication(velo, reponses){
+  const texte = [
+    velo.nom,
+    velo.moteur,
+    velo.batterie,
+    velo.description_ia,
+    velo.description
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  if(texte.includes('crossover')){
+    return "Très bon choix pour les trajets quotidiens, la ville et un usage polyvalent. Son moteur central et sa batterie offrent un bon équilibre entre confort, puissance et autonomie.";
+  }
+
+  if(texte.includes('e-st 100')){
+    return "Recommandé si votre priorité est le prix. Il convient bien pour débuter en électrique, faire des trajets courts et rouler occasionnellement sur chemins faciles.";
+  }
+
+  if(texte.includes('e-expl 520')){
+    return "Recommandé si vous cherchez du confort, de la puissance et une bonne capacité sur chemins ou sorties plus sportives. Son tout-suspendu est un vrai avantage sur terrain irrégulier.";
+  }
+
+  return "Ce vélo correspond bien à vos réponses selon son prix, son moteur, sa batterie et son usage prévu.";
+}
+
+function afficherResultats(resultats, reponses){
+  const grid = document.getElementById('resultGrid');
+  grid.innerHTML = '';
+
+  resultats.forEach(velo => {
+    const image = velo.image_url || 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=600&q=80';
+
+    const div = document.createElement('div');
+    div.className = 'velo';
+    div.innerHTML = `
+      <img src="${image}" alt="${velo.nom || 'Vélo électrique'}">
+      <div class="velo-body">
+        <div class="price">${velo.prix || 0} €</div>
+        <h3>${velo.nom || ''}</h3>
+        <p><strong>Moteur :</strong> ${velo.moteur || 'Non renseigné'}</p>
+        <p><strong>Batterie :</strong> ${velo.batterie || 'Non renseignée'}</p>
+        <p class="reason">${explication(velo, reponses)}</p>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+
+  document.getElementById('resultat').style.display = 'block';
+  document.getElementById('resultat').scrollIntoView({behavior:'smooth'});
+}
+
+document.getElementById('questionnaire').addEventListener('submit', async function(e){
+  e.preventDefault();
+
+  if(catalogue.length === 0){
+    await chargerCatalogue();
+  }
+
+  const reponses = {
+    raison: document.getElementById('raison').value,
+    usage: document.getElementById('usage').value,
+    distance: Number(document.getElementById('distance').value),
+    budget: Number(document.getElementById('budget').value),
+    terrains: terrainsChoisis(),
+    cotes: document.getElementById('cotes').value,
+    priorite: document.getElementById('priorite').value,
+    transport: document.getElementById('transport').value,
+    porter: document.getElementById('porter').value,
+    position: document.getElementById('position').value,
+    assistance: document.getElementById('assistance').value
+  };
+
+  if(reponses.terrains.length === 0){
+    alert("Veuillez sélectionner au moins un type de terrain.");
+    return;
+  }
+
+  const resultats = catalogue
+    .map(velo => ({...velo, score: scoreVelo(velo, reponses)}))
+    .sort((a,b) => b.score - a.score)
+    .slice(0,2);
+
+  afficherResultats(resultats, reponses);
+});
+
+chargerCatalogue();
+</script>
+
+</body>
+</html>
