@@ -40,10 +40,18 @@ class VeloDB(Base):
     batterie = Column(String, nullable=True)
     description_ia = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
-
-    # Étape 1 : nouveaux champs ajoutés progressivement
     marque = Column(String, nullable=True)
     modele = Column(String, nullable=True)
+
+    # Champs ajoutés (alignés sur le schéma réel Supabase)
+    marque_moteur = Column(String, nullable=True)
+    couple_moteur = Column(Integer, nullable=True)      # Nm
+    energie_moteur = Column(Integer, nullable=True)     # Watts
+    autonomie = Column(Integer, nullable=True)           # km
+    categorie = Column(String, nullable=True)
+    poids = Column(Float, nullable=True)                 # kg
+    taille_min = Column(Integer, nullable=True)           # cm
+    taille_max = Column(Integer, nullable=True)           # cm
 
 
 class ReparateurDB(Base):
@@ -102,6 +110,14 @@ def velo_to_dict(v: VeloDB):
         "description_ia": v.description_ia or "",
         "description": v.description_ia or "",
         "image_url": v.image_url or "",
+        "marque_moteur": v.marque_moteur or "",
+        "couple_moteur": v.couple_moteur,
+        "energie_moteur": v.energie_moteur,
+        "autonomie": v.autonomie,
+        "categorie": v.categorie or "",
+        "poids": v.poids,
+        "taille_min": v.taille_min,
+        "taille_max": v.taille_max,
     }
 
 
@@ -116,6 +132,26 @@ def reparateur_to_dict(r: ReparateurDB):
         "tarif_horaire": r.tarif_horaire or 0,
         "specialites": r.specialites or "",
     }
+
+
+def _vers_int(valeur):
+    """Convertit une chaîne (potentiellement vide) en int, ou None."""
+    if valeur is None or str(valeur).strip() == "":
+        return None
+    try:
+        return int(float(valeur))
+    except (ValueError, TypeError):
+        return None
+
+
+def _vers_float(valeur):
+    """Convertit une chaîne (potentiellement vide) en float, ou None."""
+    if valeur is None or str(valeur).strip() == "":
+        return None
+    try:
+        return float(valeur)
+    except (ValueError, TypeError):
+        return None
 
 
 # -------------------------------------------------------------------------
@@ -172,23 +208,10 @@ def catalogue_pour_ia(db: Session = Depends(get_db)):
 
     return {
         "site": "VéloÉlec & Co",
-        "version": "Progressive 1.1",
+        "version": "Progressive 1.2",
         "objectif": "Comparateur indépendant de vélos électriques",
         "nombre_velos": len(velos),
-        "velos": [
-            {
-                "identifiant": v.identifiant,
-                "nom": v.nom,
-                "marque": v.marque or "",
-                "modele": v.modele or "",
-                "prix": v.prix or 0,
-                "moteur": v.moteur or "",
-                "batterie": v.batterie or "",
-                "description": v.description_ia or "",
-                "image_url": v.image_url or "",
-            }
-            for v in velos
-        ],
+        "velos": [velo_to_dict(v) for v in velos],
     }
 
 # -------------------------------------------------------------------------
@@ -216,6 +239,14 @@ def ajouter_nouveau_velo(
     image_url: str = Form(None),
     marque: str = Form(None),
     modele: str = Form(None),
+    marque_moteur: str = Form(None),
+    couple_moteur: str = Form(None),
+    energie_moteur: str = Form(None),
+    autonomie: str = Form(None),
+    categorie: str = Form(None),
+    poids: str = Form(None),
+    taille_min: str = Form(None),
+    taille_max: str = Form(None),
     robot_token_form: str = Form(...),
     db: Session = Depends(get_db),
 ):
@@ -239,6 +270,14 @@ def ajouter_nouveau_velo(
         image_url=image_url,
         marque=marque,
         modele=modele,
+        marque_moteur=marque_moteur,
+        couple_moteur=_vers_int(couple_moteur),
+        energie_moteur=_vers_int(energie_moteur),
+        autonomie=_vers_int(autonomie),
+        categorie=categorie,
+        poids=_vers_float(poids),
+        taille_min=_vers_int(taille_min),
+        taille_max=_vers_int(taille_max),
     )
 
     db.add(nouveau_velo)
@@ -261,6 +300,14 @@ def modifier_velo_existant(
     image_url: str = Form(None),
     marque: str = Form(None),
     modele: str = Form(None),
+    marque_moteur: str = Form(None),
+    couple_moteur: str = Form(None),
+    energie_moteur: str = Form(None),
+    autonomie: str = Form(None),
+    categorie: str = Form(None),
+    poids: str = Form(None),
+    taille_min: str = Form(None),
+    taille_max: str = Form(None),
     robot_token_form: str = Form(...),
     db: Session = Depends(get_db),
 ):
@@ -280,6 +327,14 @@ def modifier_velo_existant(
     velo.image_url = image_url
     velo.marque = marque
     velo.modele = modele
+    velo.marque_moteur = marque_moteur
+    velo.couple_moteur = _vers_int(couple_moteur)
+    velo.energie_moteur = _vers_int(energie_moteur)
+    velo.autonomie = _vers_int(autonomie)
+    velo.categorie = categorie
+    velo.poids = _vers_float(poids)
+    velo.taille_min = _vers_int(taille_min)
+    velo.taille_max = _vers_int(taille_max)
 
     db.commit()
 
