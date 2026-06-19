@@ -361,6 +361,15 @@ def page_administration():
     raise HTTPException(status_code=404, detail="admin.html introuvable.")
 
 
+@app.get("/catalogue.html", response_class=HTMLResponse)
+def page_catalogue():
+    if os.path.exists("catalogue.html"):
+        with open("catalogue.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    raise HTTPException(status_code=404, detail="catalogue.html introuvable.")
+
+
 @app.get("/hero-bike.jpg")
 def distribuer_image_hero():
     if os.path.exists("hero-bike.jpg"):

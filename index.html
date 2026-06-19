@@ -12,7 +12,11 @@
     color:white;
     text-shadow:0 2px 10px rgba(0,0,0,0.7);
     margin:50px 0 30px;
-}main{max-width:1140px;margin:0 auto 80px;padding:0 20px}.velo-grid{
+}main{max-width:1140px;margin:0 auto 80px;padding:0 20px}
+.catalogue-cta{text-align:center;margin:50px 0 0}
+.catalogue-cta-text{color:var(--text-muted);font-size:15px;margin:0 0 18px}
+.catalogue-cta-btn{display:inline-block;background:var(--dark-blue);color:white;padding:14px 32px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:15px;transition:background-color .2s}
+.catalogue-cta-btn:hover{background:#1d3146}.velo-grid{
     display:flex;
     justify-content:center;
     gap:40px;
@@ -58,7 +62,12 @@ background:white;
 </p>
 <section class="search-container"><div class="filter-box"><div class="filter-group"><label for="search-input">Recherche par mot-clé</label><input type="text" id="search-input" placeholder="Ex: Rockrider, Moteur Bosch..." oninput="filtrerCatalogue()"></div><div class="filter-group"><label for="price-range">Budget Maximal : <span id="price-val">6000</span>€</label><div style="display:flex;align-items:center;height:100%;"><input type="range" id="price-range" min="0" max="6000" step="100" value="6000" style="width:100%;accent-color:var(--pink-accent);" oninput="filtrerCatalogue()"></div></div></div></section>
 <h2 class="section-title">Les meilleurs VAE sélectionnés par nos experts</h2>
-<main><div id="loader">Chargement sécurisé des modèles de vélos...</div><div class="velo-grid" id="velo-container"></div></main>
+<main><div id="loader">Chargement sécurisé des modèles de vélos...</div><div class="velo-grid" id="velo-container"></div>
+<div class="catalogue-cta">
+  <p class="catalogue-cta-text">Ces 2 modèles sont nos coups de cœur du moment. Découvrez les <strong id="total-velos-count">183</strong> vélos électriques de notre catalogue complet.</p>
+  <a href="/catalogue.html" class="catalogue-cta-btn">Voir tout le catalogue →</a>
+</div>
+</main>
 <div id="seo-ia-structured-data"></div>
 <script>
 let listeLocaleVelos=[];
@@ -68,7 +77,9 @@ async function initialiserCatalogue(){
     if(!response.ok) throw new Error('Erreur API '+response.status);
     listeLocaleVelos=await response.json();
     document.getElementById('loader').style.display='none';
-    genererCartesHTML(selectionAccueil(listeLocaleVelos));    
+    genererCartesHTML(selectionAccueil(listeLocaleVelos));
+    const compteurEl = document.getElementById('total-velos-count');
+    if (compteurEl) compteurEl.textContent = listeLocaleVelos.length;
   }catch(err){
     console.error(err);
     document.getElementById('loader').innerText="Erreur de synchronisation avec Supabase.";

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catalogue complet - VéloÉlec & Co</title>
+<meta name="description" content="Découvrez tous nos vélos électriques : ville, VTC, VTT, cargo, randonnée et pliants. Comparez prix, moteur, batterie et poids.">
+<style>
+:root{--dark-blue:#111d2c;--pink-accent:#d1125b;--pink-hover:#b00b4a;--text-dark:#2c3e50;--text-muted:#64748b;--bg-light:#fff;--bg-card:#f8fafc;--font-serif:Georgia,Cambria,"Times New Roman",Times,serif}
+body{font-family:'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg-card);color:var(--text-dark);margin:0;padding:0}
+header{background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:100}
+.header-container{max-width:1200px;margin:0 auto;padding:20px;display:flex;justify-content:space-between;align-items:center}
+.logo-text{font-size:24px;font-weight:800;color:var(--dark-blue);text-decoration:none}
+.logo-text span{color:var(--pink-accent)}
+.header-links{display:flex;gap:15px;align-items:center}
+.back-link{color:var(--dark-blue);text-decoration:none;font-size:14px;font-weight:600}
+.admin-link{background:transparent;color:var(--dark-blue);border:1px solid var(--dark-blue);padding:10px 22px;border-radius:30px;text-decoration:none;font-size:14px;font-weight:600}
+.admin-link:hover{background:var(--dark-blue);color:white}
+
+.page-title-section{background:var(--dark-blue);color:white;padding:50px 20px 30px;text-align:center}
+.page-title{font-family:var(--font-serif);font-size:34px;margin:0 0 10px}
+.page-subtitle{font-size:15px;color:#cbd5e1;margin:0}
+
+.search-container{max-width:1100px;margin:-30px auto 0;padding:0 20px;position:relative;z-index:10}
+.filter-box{background:white;padding:22px;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.08);display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.filter-group{display:flex;flex-direction:column;gap:8px}
+.filter-group label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--dark-blue)}
+.filter-group input[type="text"],.filter-group select{padding:11px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;outline:none;background:white}
+.filter-group input[type="text"]:focus,.filter-group select:focus{border-color:var(--pink-accent)}
+
+.category-nav{max-width:1100px;margin:25px auto 0;padding:0 20px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.category-chip{background:white;border:1px solid #cbd5e1;color:var(--text-dark);padding:8px 18px;border-radius:30px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.category-chip:hover{border-color:var(--pink-accent);color:var(--pink-accent)}
+.category-chip.active{background:var(--pink-accent);border-color:var(--pink-accent);color:white}
+
+.result-count{max-width:1100px;margin:20px auto 0;padding:0 20px;color:var(--text-muted);font-size:14px}
+
+main{max-width:1200px;margin:0 auto 80px;padding:0 20px}
+.category-section{margin-top:40px}
+.category-heading{font-family:var(--font-serif);font-size:24px;color:var(--dark-blue);border-bottom:2px solid var(--pink-accent);padding-bottom:10px;margin-bottom:25px}
+
+.velo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:25px}
+.velo-card{background:white;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s;border:1px solid #e2e8f0}
+.velo-card:hover{transform:translateY(-4px);box-shadow:0 12px 20px rgba(0,0,0,.08)}
+.image-container{width:100%;height:200px;background:white;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.velo-img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+.velo-badge-price{position:absolute;bottom:12px;left:12px;background:var(--dark-blue);color:white;padding:5px 12px;font-weight:bold;font-size:14px;border-radius:4px}
+.velo-body{padding:18px;display:flex;flex-direction:column;flex-grow:1}
+.velo-name{font-family:var(--font-serif);font-size:17px;color:var(--dark-blue);margin:0 0 6px;line-height:1.3}
+.velo-brand{font-size:12px;color:var(--pink-accent);font-weight:700;margin-bottom:10px}
+.tech-specs{margin-bottom:14px;font-size:13px;color:var(--text-dark);border-top:1px solid #e2e8f0;padding-top:12px}
+.spec-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
+.spec-label{color:var(--text-muted)}
+.spec-value{font-weight:600;text-align:right}
+.action-edit-btn{text-align:center;background:transparent;color:var(--text-muted);border:1px solid #cbd5e1;padding:8px;border-radius:4px;text-decoration:none;font-size:12px;font-weight:600;margin-top:auto}
+.action-edit-btn:hover{border-color:var(--pink-accent);color:var(--pink-accent)}
+
+#loader{text-align:center;font-family:var(--font-serif);font-size:20px;padding:60px;color:var(--text-muted)}
+.no-results{text-align:center;color:var(--text-muted);padding:60px 20px;font-size:16px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-container">
+    <a href="/" class="logo-text">VéloÉlec<span>&Co</span></a>
+    <div class="header-links">
+      <a href="/" class="back-link">← Retour à l'accueil</a>
+      <a href="/admin.html" class="admin-link">Espace Admin</a>
+    </div>
+  </div>
+</header>
+
+<section class="page-title-section">
+  <h1 class="page-title">Le catalogue complet</h1>
+  <p class="page-subtitle">Tous nos vélos électriques, classés par catégorie</p>
+</section>
+
+<section class="search-container">
+  <div class="filter-box">
+    <div class="filter-group">
+      <label for="search-input">Recherche par mot-clé</label>
+      <input type="text" id="search-input" placeholder="Ex: Bosch, Kalkhoff, cargo..." oninput="filtrerCatalogue()">
+    </div>
+    <div class="filter-group">
+      <label for="category-select">Catégorie</label>
+      <select id="category-select" onchange="filtrerCatalogue()">
+        <option value="">Toutes les catégories</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="sort-select">Trier par</label>
+      <select id="sort-select" onchange="filtrerCatalogue()">
+        <option value="categorie">Catégorie</option>
+        <option value="prix-asc">Prix croissant</option>
+        <option value="prix-desc">Prix décroissant</option>
+        <option value="nom">Nom (A-Z)</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<p class="result-count" id="result-count"></p>
+
+<main>
+  <div id="loader">Chargement du catalogue...</div>
+  <div id="catalogue-container"></div>
+</main>
+
+<script>
+let listeLocaleVelos = [];
+
+async function initialiserCatalogue() {
+  try {
+    const response = await fetch('/api/velos');
+    if (!response.ok) throw new Error('Erreur API ' + response.status);
+    listeLocaleVelos = await response.json();
+    document.getElementById('loader').style.display = 'none';
+    remplirSelecteurCategories(listeLocaleVelos);
+    afficherCatalogue(listeLocaleVelos);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('loader').innerText = "Erreur de synchronisation avec la base de données.";
+  }
+}
+
+function remplirSelecteurCategories(liste) {
+  const categories = [...new Set(liste.map(v => v.categorie).filter(Boolean))].sort();
+  const select = document.getElementById('category-select');
+  categories.forEach(cat => {
+    const option = document.createElement('option');
+    option.value = cat;
+    option.textContent = cat;
+    select.appendChild(option);
+  });
+}
+
+function formaterDescriptionCourte(texte) {
+  if (!texte) return '';
+  return texte.length > 120 ? texte.substring(0, 120).trim() + '…' : texte;
+}
+
+function creerCarteVelo(velo) {
+  const imageSrc = (velo.image_url && velo.image_url.trim() !== '')
+    ? velo.image_url
+    : 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=600&q=80';
+  const marqueModele = [velo.marque, velo.modele].filter(Boolean).join(' • ');
+  const identifiant = velo.identifiant || velo.id || '';
+
+  const card = document.createElement('div');
+  card.className = 'velo-card';
+  card.innerHTML = `
+    <div class="image-container">
+      <img src="${imageSrc}" class="velo-img" alt="${velo.nom || ''}" loading="lazy">
+      <div class="velo-badge-price">${velo.prix || 0} €</div>
+    </div>
+    <div class="velo-body">
+      <h3 class="velo-name">${velo.nom || ''}</h3>
+      ${marqueModele ? `<div class="velo-brand">${velo.marque || ''}</div>` : ''}
+      <div class="tech-specs">
+        <div class="spec-row"><span class="spec-label">Moteur</span><span class="spec-value">${velo.marque_moteur || velo.moteur || 'Standard'}</span></div>
+        ${velo.couple_moteur ? `<div class="spec-row"><span class="spec-label">Couple</span><span class="spec-value">${velo.couple_moteur} Nm</span></div>` : ''}
+        <div class="spec-row"><span class="spec-label">Batterie</span><span class="spec-value">${velo.batterie || 'N/A'}</span></div>
+        ${velo.poids ? `<div class="spec-row"><span class="spec-label">Poids</span><span class="spec-value">${velo.poids} kg</span></div>` : ''}
+      </div>
+      <a href="/admin.html?id=${encodeURIComponent(identifiant)}" class="action-edit-btn">Modifier la fiche</a>
+    </div>
+  `;
+  return card;
+}
+
+function afficherCatalogue(liste) {
+  const container = document.getElementById('catalogue-container');
+  const resultCount = document.getElementById('result-count');
+  container.innerHTML = '';
+
+  if (!liste || liste.length === 0) {
+    container.innerHTML = "<p class='no-results'>Aucun vélo ne correspond à ces critères.</p>";
+    resultCount.textContent = '';
+    return;
+  }
+
+  resultCount.textContent = `${liste.length} vélo${liste.length > 1 ? 's' : ''} trouvé${liste.length > 1 ? 's' : ''}`;
+
+  const tri = document.getElementById('sort-select').value;
+
+  if (tri === 'prix-asc') {
+    afficherListeSimple([...liste].sort((a, b) => (a.prix || 0) - (b.prix || 0)));
+  } else if (tri === 'prix-desc') {
+    afficherListeSimple([...liste].sort((a, b) => (b.prix || 0) - (a.prix || 0)));
+  } else if (tri === 'nom') {
+    afficherListeSimple([...liste].sort((a, b) => (a.nom || '').localeCompare(b.nom || '')));
+  } else {
+    afficherParCategorie(liste);
+  }
+}
+
+function afficherListeSimple(liste) {
+  const container = document.getElementById('catalogue-container');
+  const grid = document.createElement('div');
+  grid.className = 'velo-grid';
+  liste.forEach(velo => grid.appendChild(creerCarteVelo(velo)));
+  container.appendChild(grid);
+}
+
+function afficherParCategorie(liste) {
+  const container = document.getElementById('catalogue-container');
+  const groupes = {};
+
+  liste.forEach(velo => {
+    const cat = velo.categorie || 'Autres vélos électriques';
+    if (!groupes[cat]) groupes[cat] = [];
+    groupes[cat].push(velo);
+  });
+
+  Object.keys(groupes).sort().forEach(cat => {
+    const section = document.createElement('section');
+    section.className = 'category-section';
+    section.innerHTML = `<h2 class="category-heading">${cat} <span style="color:var(--text-muted);font-size:16px;">(${groupes[cat].length})</span></h2>`;
+
+    const grid = document.createElement('div');
+    grid.className = 'velo-grid';
+    groupes[cat].forEach(velo => grid.appendChild(creerCarteVelo(velo)));
+    section.appendChild(grid);
+
+    container.appendChild(section);
+  });
+}
+
+function filtrerCatalogue() {
+  const texte = document.getElementById('search-input').value.toLowerCase();
+  const categorieChoisie = document.getElementById('category-select').value;
+
+  const resultat = listeLocaleVelos.filter(velo => {
+    const contenu = [velo.nom, velo.marque, velo.modele, velo.moteur, velo.marque_moteur, velo.batterie, velo.categorie, velo.description_ia]
+      .filter(Boolean).join(' ').toLowerCase();
+    const matchTexte = contenu.includes(texte);
+    const matchCategorie = !categorieChoisie || velo.categorie === categorieChoisie;
+    return matchTexte && matchCategorie;
+  });
+
+  afficherCatalogue(resultat);
+}
+
+window.addEventListener('DOMContentLoaded', initialiserCatalogue);
+</script>
+
+</body>
+</html>
