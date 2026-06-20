@@ -379,6 +379,15 @@ def page_catalogue():
     raise HTTPException(status_code=404, detail="catalogue.html introuvable.")
 
 
+@app.get("/top-10-velos-ville-electriques.html", response_class=HTMLResponse)
+def page_top10_ville():
+    if os.path.exists("top-10-velos-ville-electriques.html"):
+        with open("top-10-velos-ville-electriques.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    raise HTTPException(status_code=404, detail="top-10-velos-ville-electriques.html introuvable.")
+
+
 @app.get("/hero-bike.jpg")
 def distribuer_image_hero():
     if os.path.exists("hero-bike.jpg"):

@@ -7,6 +7,7 @@ VéloÉlec & Co recense et compare les vélos à assistance électrique (VAE) di
 ## Catalogue
 
 - [Catalogue complet](https://comparateur-velo.onrender.com/catalogue.html): Liste de tous les vélos électriques référencés, filtrable par catégorie, mot-clé et prix.
+- [Top 10 vélos électriques de ville 2026](https://comparateur-velo.onrender.com/top-10-velos-ville-electriques.html): Comparatif détaillé de 10 vélos de ville électriques par budget, avec prix, moteur, couple, batterie et poids.
 - [API du catalogue pour agents IA](https://comparateur-velo.onrender.com/api/ia/catalogue): Export JSON structuré de l'ensemble du catalogue (identifiant, nom, marque, modèle, prix, moteur, couple, batterie, poids, catégorie) destiné à l'interrogation par des systèmes IA.
 - [Questionnaire de recommandation](https://comparateur-velo.onrender.com/questionnaire.html): Outil interactif qui recommande 2 modèles du catalogue selon les besoins de l'utilisateur (usage, budget, gabarit).
 
