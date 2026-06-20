@@ -6,15 +6,15 @@ VéloÉlec & Co recense et compare les vélos à assistance électrique (VAE) di
 
 ## Catalogue
 
-- [Catalogue complet](https://comparaison-velo.onrender.com/catalogue.html): Liste de tous les vélos électriques référencés, filtrable par catégorie, mot-clé et prix.
-- [API du catalogue pour agents IA](https://comparaison-velo.onrender.com/api/ia/catalogue): Export JSON structuré de l'ensemble du catalogue (identifiant, nom, marque, modèle, prix, moteur, couple, batterie, poids, catégorie) destiné à l'interrogation par des systèmes IA.
-- [Questionnaire de recommandation](https://comparaison-velo.onrender.com/questionnaire.html): Outil interactif qui recommande 2 modèles du catalogue selon les besoins de l'utilisateur (usage, budget, gabarit).
+- [Catalogue complet](https://comparateur-velo.onrender.com/catalogue.html): Liste de tous les vélos électriques référencés, filtrable par catégorie, mot-clé et prix.
+- [API du catalogue pour agents IA](https://comparateur-velo.onrender.com/api/ia/catalogue): Export JSON structuré de l'ensemble du catalogue (identifiant, nom, marque, modèle, prix, moteur, couple, batterie, poids, catégorie) destiné à l'interrogation par des systèmes IA.
+- [Questionnaire de recommandation](https://comparateur-velo.onrender.com/questionnaire.html): Outil interactif qui recommande 2 modèles du catalogue selon les besoins de l'utilisateur (usage, budget, gabarit).
 
 ## Données techniques
 
-- [API liste des vélos](https://comparaison-velo.onrender.com/api/velos): Endpoint JSON public listant tous les vélos avec leurs caractéristiques techniques.
-- [API fiche vélo individuelle](https://comparaison-velo.onrender.com/api/velos/{id}): Endpoint JSON pour une fiche vélo précise, accessible via son identifiant.
+- [API liste des vélos](https://comparateur-velo.onrender.com/api/velos): Endpoint JSON public listant tous les vélos avec leurs caractéristiques techniques.
+- [API fiche vélo individuelle](https://comparateur-velo.onrender.com/api/velos/{id}): Endpoint JSON pour une fiche vélo précise, accessible via son identifiant.
 
 ## Optional
 
-- [Espace administrateur](https://comparaison-velo.onrender.com/admin.html): Interface de gestion du catalogue, réservée à l'équipe éditoriale.
+- [Espace administrateur](https://comparateur-velo.onrender.com/admin.html): Interface de gestion du catalogue, réservée à l'équipe éditoriale.
