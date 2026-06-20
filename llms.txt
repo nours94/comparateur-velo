@@ -1,0 +1,20 @@
+# VéloÉlec & Co
+
+> Comparateur indépendant de vélos électriques en France. Plus de 270 modèles référencés (ville, VTC, VTT, cargo, randonnée, pliant) avec prix, moteur, couple, batterie et poids, issus de plusieurs distributeurs. Aucune commission de vente, aucun classement sponsorisé.
+
+VéloÉlec & Co recense et compare les vélos à assistance électrique (VAE) disponibles à la vente en France. Chaque fiche vélo indique : marque, modèle, prix, marque et puissance du moteur, couple moteur (Nm), capacité de la batterie (Wh), poids (kg) et catégorie. Les données sont mises à jour régulièrement à partir de plusieurs distributeurs (Cyclable, VéloÉlectriqueFrance). Le site ne vend pas directement de vélos et ne reçoit pas de commission des marques citées.
+
+## Catalogue
+
+- [Catalogue complet](https://comparaison-velo.onrender.com/catalogue.html): Liste de tous les vélos électriques référencés, filtrable par catégorie, mot-clé et prix.
+- [API du catalogue pour agents IA](https://comparaison-velo.onrender.com/api/ia/catalogue): Export JSON structuré de l'ensemble du catalogue (identifiant, nom, marque, modèle, prix, moteur, couple, batterie, poids, catégorie) destiné à l'interrogation par des systèmes IA.
+- [Questionnaire de recommandation](https://comparaison-velo.onrender.com/questionnaire.html): Outil interactif qui recommande 2 modèles du catalogue selon les besoins de l'utilisateur (usage, budget, gabarit).
+
+## Données techniques
+
+- [API liste des vélos](https://comparaison-velo.onrender.com/api/velos): Endpoint JSON public listant tous les vélos avec leurs caractéristiques techniques.
+- [API fiche vélo individuelle](https://comparaison-velo.onrender.com/api/velos/{id}): Endpoint JSON pour une fiche vélo précise, accessible via son identifiant.
+
+## Optional
+
+- [Espace administrateur](https://comparaison-velo.onrender.com/admin.html): Interface de gestion du catalogue, réservée à l'équipe éditoriale.

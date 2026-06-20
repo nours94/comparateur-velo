@@ -174,6 +174,15 @@ def robots_txt():
     )
 
 
+@app.get("/llms.txt", response_class=PlainTextResponse)
+def llms_txt():
+    if os.path.exists("llms.txt"):
+        with open("llms.txt", "r", encoding="utf-8") as f:
+            return PlainTextResponse(content=f.read())
+
+    raise HTTPException(status_code=404, detail="llms.txt introuvable.")
+
+
 # -------------------------------------------------------------------------
 # ROUTES API PUBLIQUES
 # -------------------------------------------------------------------------
