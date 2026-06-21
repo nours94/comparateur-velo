@@ -183,6 +183,14 @@ def llms_txt():
     raise HTTPException(status_code=404, detail="llms.txt introuvable.")
 
 
+@app.get("/sitemap.xml")
+def sitemap_xml():
+    if os.path.exists("sitemap.xml"):
+        return FileResponse("sitemap.xml", media_type="application/xml")
+
+    raise HTTPException(status_code=404, detail="sitemap.xml introuvable.")
+
+
 # -------------------------------------------------------------------------
 # ROUTES API PUBLIQUES
 # -------------------------------------------------------------------------
