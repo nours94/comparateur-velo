@@ -215,20 +215,53 @@ def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
     reparateurs = db.query(ReparateurDB).all()
     return [reparateur_to_dict(r) for r in reparateurs]
 
-
 # -------------------------------------------------------------------------
 # ROUTE IA POUR GPT PERSONNALISÉ
 # -------------------------------------------------------------------------
 @app.get("/api/ia/catalogue")
-def catalogue_pour_ia(db: Session = Depends(get_db)):
-    velos = db.query(VeloDB).all()
+def catalogue_pour_ia(
+    budget_max: int | None = None,
+    taille_cm: int | None = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(VeloDB)
+
+    if budget_max:
+        query = query.filter(VeloDB.prix <= int(budget_max * 1.1))
+
+    velos = query.limit(20).all()
+
+    if taille_cm:
+        velos = [
+            v for v in velos
+            if (
+                (v.taille_min is None or taille_cm >= v.taille_min)
+                and
+                (v.taille_max is None or taille_cm <= v.taille_max)
+            )
+        ]
 
     return {
         "site": "VéloÉlec & Co",
-        "version": "Progressive 1.2",
-        "objectif": "Comparateur indépendant de vélos électriques",
+        "version": "Progressive 2.0",
         "nombre_velos": len(velos),
-        "velos": [velo_to_dict(v) for v in velos],
+        "velos": [
+            {
+                "identifiant": v.identifiant,
+                "nom": v.nom,
+                "marque": v.marque,
+                "modele": v.modele,
+                "prix": v.prix,
+                "categorie": v.categorie,
+                "autonomie": v.autonomie,
+                "couple_moteur": v.couple_moteur,
+                "energie_moteur": v.energie_moteur,
+                "poids": v.poids,
+                "taille_min": v.taille_min,
+                "taille_max": v.taille_max,
+            }
+            for v in velos
+        ],
     }
 
 # -------------------------------------------------------------------------
