@@ -165,7 +165,6 @@ def health():
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
     return (
-        "# MARQUEUR-TEST-XYZ123\n"
         "User-agent: *\n"
         "Allow: /\n\n"
         "User-agent: GPTBot\n"
