@@ -58,22 +58,29 @@ background:white;
 <body>
 <header><div class="header-container"><a href="/" class="logo-text">VéloÉlec<span>&Co</span></a><a href="/admin.html" class="admin-link">Espace Admin</a></div></header>
 <section class="hero-section">
-<h1 class="hero-title">Trouvez le vélo électrique idéal grâce à notre conseiller IA.</h1>
-<p class="hero-subtitle">Notre intelligence artificielle analyse votre budget, votre usage et votre morphologie pour vous recommander les vélos les plus adaptés.</p>
-<a class="hero-btn" href="https://chatgpt.com/g/g-6a314d7ba250819181f81f3fc1ec7c01-veloelec-co" target="_blank" rel="noopener">
-  🚲 Trouver mon vélo électrique avec l'IA
-</a>
+<h1 class="hero-title">Trouvez le vélo électrique idéal selon votre besoin.</h1>
+<p class="hero-subtitle">Choisissez le questionnaire gratuit sans compte ChatGPT, ou utilisez notre conseiller IA VéloÉlec &amp; Co pour une recommandation plus personnalisée.</p>
 
-<p style="margin-top:12px;font-size:14px;color:white;">
-  Décrivez votre besoin à notre conseiller IA VéloÉlec &amp; Co et obtenez une recommandation personnalisée parmi les vélos du catalogue.
+<div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap;align-items:center;">
+  <a class="hero-btn" href="/questionnaire.html">
+    ✅ Questionnaire gratuit sans ChatGPT
+  </a>
+
+  <a class="hero-btn" href="https://chatgpt.com/g/g-6a314d7ba250819181f81f3fc1ec7c01-veloelec-co" target="_blank" rel="noopener" style="background:var(--dark-blue);">
+    🚲 Conseiller IA avec ChatGPT
+  </a>
+</div>
+
+<p style="margin-top:14px;font-size:14px;color:white;">
+  Le questionnaire vous guide directement sur le site. Le conseiller IA permet de discuter avec notre GPT personnalisé pour affiner votre choix.
 </p>
 
 <p style="margin-top:10px;font-size:13px;color:#f1f5f9;background:rgba(255,255,255,0.15);display:inline-block;padding:8px 12px;border-radius:6px;">
-  ✨ Utilisation gratuite avec un compte ChatGPT.
+  ✨ Le questionnaire ne nécessite aucun compte. Le conseiller IA nécessite un compte ChatGPT gratuit.
 </p>
 
 <p style="margin-top:8px;font-size:12px;color:white;opacity:0.85;">
-  Plus de 180 vélos électriques analysés par notre IA.
+  Plus de 180 vélos électriques analysés pour vous aider à choisir.
 </p>
 </section>
 <section class="search-container"><div class="filter-box"><div class="filter-group"><label for="search-input">Recherche par mot-clé</label><input type="text" id="search-input" placeholder="Ex: Rockrider, Moteur Bosch..." oninput="filtrerCatalogue()"></div><div class="filter-group"><label for="price-range">Budget Maximal : <span id="price-val">6000</span>€</label><div style="display:flex;align-items:center;height:100%;"><input type="range" id="price-range" min="0" max="6000" step="100" value="6000" style="width:100%;accent-color:var(--pink-accent);" oninput="filtrerCatalogue()"></div></div></div></section>
