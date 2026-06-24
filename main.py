@@ -238,8 +238,8 @@ def catalogue_pour_ia(
 
     # Sécurité : on évite qu'un appel GPT ramène trop de vélos
     if limit is None or limit <= 0:
-        limit = 30
-    limit = min(limit, 60)
+        limit = 60
+    limit = min(limit, 100)
 
     query = db.query(VeloDB)
 
@@ -276,16 +276,60 @@ def catalogue_pour_ia(
             (VeloDB.taille_max == None) | (VeloDB.taille_max >= taille_cm),
         )
 
-    # On privilégie les vélos avec une photo, puis les prix croissants.
-    velos = (
-        query
-        .order_by(
-            VeloDB.image_url.desc(),
-            VeloDB.prix.asc()
+    filtre_categorie_actif = bool(categorie) or bool(recherche)
+
+    if filtre_categorie_actif:
+        # Un filtre explicite a été demandé : on garde le tri simple par prix.
+        velos = (
+            query
+            .order_by(VeloDB.prix.asc())
+            .limit(limit)
+            .all()
         )
-        .limit(limit)
-        .all()
-    )
+    else:
+        # Aucun filtre catégorie/recherche fourni par le GPT : risque que les
+        # vélos les moins chers (toutes catégories confondues) saturent la
+        # limite et masquent des familles entières de vélos (ex: cargo).
+        # On garantit donc un quota minimal par grande catégorie avant de
+        # compléter avec les moins chers du reste du catalogue.
+        categories_a_garantir = [
+            "cargo", "VTT", "ville", "VTC", "pliant", "route"
+        ]
+        quota_par_categorie = max(3, limit // (len(categories_a_garantir) + 1))
+
+        velos_par_id: dict = {}
+
+        for mot_categorie in categories_a_garantir:
+            mot = f"%{mot_categorie}%"
+            sous_resultats = (
+                query
+                .filter(
+                    (VeloDB.categorie.ilike(mot))
+                    | (VeloDB.nom.ilike(mot))
+                    | (VeloDB.modele.ilike(mot))
+                )
+                .order_by(VeloDB.prix.asc())
+                .limit(quota_par_categorie)
+                .all()
+            )
+            for v in sous_resultats:
+                velos_par_id[v.identifiant] = v
+
+        # On complète avec les moins chers du reste du catalogue, sans
+        # dépasser la limite globale demandée.
+        if len(velos_par_id) < limit:
+            complement = (
+                query
+                .order_by(VeloDB.prix.asc())
+                .limit(limit)
+                .all()
+            )
+            for v in complement:
+                if len(velos_par_id) >= limit:
+                    break
+                velos_par_id[v.identifiant] = v
+
+        velos = sorted(velos_par_id.values(), key=lambda v: v.prix or 0)[:limit]
 
     return {
         "site": "VéloÉlec & Co",
