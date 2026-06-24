@@ -361,6 +361,66 @@ def catalogue_pour_ia(
     }
 
 # -------------------------------------------------------------------------
+# ROUTE DIAGNOSTIC : RÉPARTITION DU CATALOGUE PAR CATÉGORIE
+# -------------------------------------------------------------------------
+@app.get("/api/ia/catalogue/stats")
+def stats_catalogue(db: Session = Depends(get_db)):
+    """
+    Diagnostic rapide : permet de vérifier que chaque grande catégorie
+    de vélos est bien représentée, et de détecter en amont si l'une
+    d'elles risque d'être noyée par le tri prix de getCatalogueIA.
+
+    À surveiller particulièrement après chaque import via robot_ia.py,
+    ou si une nouvelle grande catégorie de vélos apparaît dans le
+    catalogue (pliant, route, etc.) et doit être ajoutée à la liste
+    categories_a_garantir de l'endpoint /api/ia/catalogue.
+    """
+
+    categories_a_garantir = [
+        "cargo", "VTT", "ville", "VTC", "pliant", "route"
+    ]
+
+    total_velos = db.query(VeloDB).count()
+
+    repartition = []
+    for mot_categorie in categories_a_garantir:
+        mot = f"%{mot_categorie}%"
+        nombre = (
+            db.query(VeloDB)
+            .filter(
+                (VeloDB.categorie.ilike(mot))
+                | (VeloDB.nom.ilike(mot))
+                | (VeloDB.modele.ilike(mot))
+            )
+            .count()
+        )
+        repartition.append({
+            "categorie": mot_categorie,
+            "nombre_velos": nombre,
+            "alerte": nombre == 0,
+        })
+
+    # Vélos qui ne correspondent à aucune des catégories surveillées,
+    # utile pour repérer une catégorie manquante dans la liste.
+    nombre_categorise = sum(r["nombre_velos"] for r in repartition)
+
+    return {
+        "total_velos_catalogue": total_velos,
+        "repartition_categories_surveillees": repartition,
+        "note": (
+            "Le total par catégorie peut dépasser total_velos_catalogue "
+            "si un vélo correspond à plusieurs mots-clés (ex: nom contenant "
+            "à la fois 'cargo' et 'ville'). Une categorie avec alerte=true "
+            "signifie qu'aucun vélo ne correspond actuellement à ce mot-clé : "
+            "vérifier si la catégorie a été renommée ou si le stock est "
+            "réellement vide."
+        ),
+        "nombre_velos_non_categorises_estimes": max(
+            0, total_velos - nombre_categorise
+        ),
+    }
+
+# -------------------------------------------------------------------------
 # ROUTE QUESTIONNAIRE VELO
 # -------------------------------------------------------------------------    
 @app.get("/questionnaire.html", response_class=HTMLResponse)
