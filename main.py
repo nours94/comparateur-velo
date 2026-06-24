@@ -220,15 +220,51 @@ def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
 # ROUTE IA POUR GPT PERSONNALISÉ
 # -------------------------------------------------------------------------
 @app.get("/api/ia/catalogue")
-def catalogue_pour_ia(db: Session = Depends(get_db)):
-    velos = db.query(VeloDB).all()
+def catalogue_pour_ia(
+    budget_max: int | None = None,
+    categorie: str | None = None,
+    taille_cm: int | None = None,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+):
+    query = db.query(VeloDB)
+
+    if budget_max is not None:
+        query = query.filter(VeloDB.prix <= budget_max)
+
+    if categorie:
+        query = query.filter(VeloDB.categorie.ilike(f"%{categorie}%"))
+
+    if taille_cm is not None:
+        query = query.filter(
+            (VeloDB.taille_min == None) | (VeloDB.taille_min <= taille_cm),
+            (VeloDB.taille_max == None) | (VeloDB.taille_max >= taille_cm),
+        )
+
+    velos = query.order_by(VeloDB.prix.asc()).limit(limit).all()
 
     return {
         "site": "VéloÉlec & Co",
-        "version": "Progressive 1.2",
-        "objectif": "Comparateur indépendant de vélos électriques",
+        "version": "Progressive 1.3",
         "nombre_velos": len(velos),
-        "velos": [velo_to_dict(v) for v in velos],
+        "velos": [
+            {
+                "id": v.identifiant,
+                "nom": v.nom,
+                "marque": v.marque or "",
+                "modele": v.modele or "",
+                "prix": v.prix or 0,
+                "categorie": v.categorie or "",
+                "autonomie": v.autonomie,
+                "couple_moteur": v.couple_moteur,
+                "energie_moteur": v.energie_moteur,
+                "poids": v.poids,
+                "taille_min": v.taille_min,
+                "taille_max": v.taille_max,
+                "image_url": v.image_url or "",
+            }
+            for v in velos
+        ],
     }
 
 # -------------------------------------------------------------------------
