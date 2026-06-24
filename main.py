@@ -224,16 +224,51 @@ def catalogue_pour_ia(
     budget_max: int | None = None,
     categorie: str | None = None,
     taille_cm: int | None = None,
-    limit: int = 10,
+    recherche: str | None = None,
+    limit: int = 30,
     db: Session = Depends(get_db),
 ):
+    """
+    Catalogue allégé pour le GPT personnalisé.
+
+    Objectif : ne pas renvoyer les 500 vélos d'un coup,
+    mais permettre au GPT de filtrer intelligemment par budget,
+    catégorie, taille et mots-clés, tout en conservant les photos.
+    """
+
+    # Sécurité : on évite qu'un appel GPT ramène trop de vélos
+    if limit is None or limit <= 0:
+        limit = 30
+    limit = min(limit, 60)
+
     query = db.query(VeloDB)
 
     if budget_max is not None:
         query = query.filter(VeloDB.prix <= budget_max)
 
+    # Important : les cargos peuvent être indiqués dans la catégorie,
+    # mais aussi seulement dans le nom, le modèle ou la description.
     if categorie:
-        query = query.filter(VeloDB.categorie.ilike(f"%{categorie}%"))
+        mot = f"%{categorie}%"
+        query = query.filter(
+            (VeloDB.categorie.ilike(mot))
+            | (VeloDB.nom.ilike(mot))
+            | (VeloDB.modele.ilike(mot))
+            | (VeloDB.description_ia.ilike(mot))
+        )
+
+    # Recherche libre complémentaire : ville, cargo, longtail, Bosch, enfant, etc.
+    if recherche:
+        mot = f"%{recherche}%"
+        query = query.filter(
+            (VeloDB.nom.ilike(mot))
+            | (VeloDB.marque.ilike(mot))
+            | (VeloDB.modele.ilike(mot))
+            | (VeloDB.moteur.ilike(mot))
+            | (VeloDB.batterie.ilike(mot))
+            | (VeloDB.categorie.ilike(mot))
+            | (VeloDB.description_ia.ilike(mot))
+        )
 
     if taille_cm is not None:
         query = query.filter(
@@ -241,12 +276,22 @@ def catalogue_pour_ia(
             (VeloDB.taille_max == None) | (VeloDB.taille_max >= taille_cm),
         )
 
-    velos = query.order_by(VeloDB.prix.asc()).limit(limit).all()
+    # On privilégie les vélos avec une photo, puis les prix croissants.
+    velos = (
+        query
+        .order_by(
+            VeloDB.image_url.desc(),
+            VeloDB.prix.asc()
+        )
+        .limit(limit)
+        .all()
+    )
 
     return {
         "site": "VéloÉlec & Co",
-        "version": "Progressive 1.3",
+        "version": "Progressive 1.4",
         "nombre_velos": len(velos),
+        "conseil_affichage": "Pour afficher les photos dans ChatGPT, utiliser le champ photo_markdown.",
         "velos": [
             {
                 "id": v.identifiant,
@@ -255,13 +300,17 @@ def catalogue_pour_ia(
                 "modele": v.modele or "",
                 "prix": v.prix or 0,
                 "categorie": v.categorie or "",
+                "moteur": v.moteur or "",
+                "batterie": v.batterie or "",
                 "autonomie": v.autonomie,
                 "couple_moteur": v.couple_moteur,
                 "energie_moteur": v.energie_moteur,
                 "poids": v.poids,
                 "taille_min": v.taille_min,
                 "taille_max": v.taille_max,
+                "description_ia": v.description_ia or "",
                 "image_url": v.image_url or "",
+                "photo_markdown": f"![{v.nom}]({v.image_url})" if v.image_url else "",
             }
             for v in velos
         ],
