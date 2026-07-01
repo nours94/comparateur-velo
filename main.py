@@ -219,6 +219,10 @@ def recuperer_un_velo(id_velo: str, db: Session = Depends(get_db)):
     return velo_to_dict(velo)
 
 
+@app.get("/robots.txt")
+def robots_txt():
+    return FileResponse("robots.txt", media_type="text/plain")
+
 @app.get("/api/reparateurs")
 def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
     reparateurs = db.query(ReparateurDB).all()
