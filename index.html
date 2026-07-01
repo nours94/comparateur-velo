@@ -20,6 +20,38 @@
 .catalogue-cta-btn:hover{background:#1d3146}
 .secondary-link{display:block;margin-top:16px;font-size:14px;color:var(--pink-accent);text-decoration:none;font-weight:600}
 .secondary-link:hover{text-decoration:underline}
+
+/* ── SECTION FATBIKE ───────────────────────────────────────── */
+.fatbike-section{background:var(--dark-blue);padding:60px 20px 70px;margin-top:60px}
+.fatbike-section-inner{max-width:1140px;margin:0 auto}
+.fatbike-header{text-align:center;margin-bottom:32px}
+.fatbike-header h2{font-family:var(--font-serif);font-size:34px;color:white;margin:0 0 10px}
+.fatbike-header p{color:rgba(255,255,255,.75);font-size:16px;max-width:700px;margin:0 auto}
+.fatbike-warning{background:rgba(220,38,38,.12);border:2px solid #ef4444;border-radius:10px;padding:22px 28px;margin-bottom:36px}
+.fatbike-warning-title{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;color:#fca5a5;margin:0 0 12px}
+.fatbike-warning-title span{font-size:22px}
+.fatbike-warning-body{color:rgba(255,255,255,.88);font-size:14px;line-height:1.7}
+.fatbike-warning-body strong{color:#fca5a5}
+.fatbike-warning-list{margin:10px 0 0 0;padding-left:20px;color:rgba(255,255,255,.85)}
+.fatbike-warning-list li{margin-bottom:5px}
+.fatbike-warning-footer{margin-top:14px;font-size:13px;color:rgba(255,255,255,.6);font-style:italic}
+.fatbike-grid{display:flex;justify-content:center;gap:30px;flex-wrap:wrap}
+.fatbike-card{width:420px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+.fatbike-card:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(0,0,0,.4)}
+.fatbike-card .image-container{height:260px;background:rgba(255,255,255,.04)}
+.fatbike-card .velo-badge-price{background:var(--pink-accent)}
+.fatbike-card-body{padding:20px;flex-grow:1;display:flex;flex-direction:column}
+.fatbike-card-name{font-family:var(--font-serif);font-size:19px;color:white;margin:0 0 6px}
+.fatbike-card-brand{font-size:12px;color:var(--pink-accent);font-weight:700;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.fatbike-card-specs{border-top:1px solid rgba(255,255,255,.12);padding-top:12px;margin-bottom:14px}
+.fatbike-spec-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px}
+.fatbike-spec-label{color:rgba(255,255,255,.55)}
+.fatbike-spec-value{color:white;font-weight:600;text-align:right}
+.fatbike-badge-legal{display:inline-block;background:rgba(239,68,68,.2);border:1px solid #ef4444;color:#fca5a5;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:10px;letter-spacing:.3px}
+.fatbike-cta{text-align:center;margin-top:36px}
+.fatbike-cta a{display:inline-block;background:var(--pink-accent);color:white;padding:13px 28px;border-radius:4px;text-decoration:none;font-weight:700;font-size:15px}
+.fatbike-cta a:hover{background:var(--pink-hover)}
+.fatbike-loader{text-align:center;color:rgba(255,255,255,.5);padding:30px;font-size:15px}
 .velo-grid{
     display:flex;
     justify-content:center;
@@ -93,6 +125,50 @@ background:white;
 </div>
 </main>
 <div id="seo-ia-structured-data"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION FATBIKE ÉLECTRIQUE
+     ═══════════════════════════════════════════════════════════ -->
+<section class="fatbike-section">
+  <div class="fatbike-section-inner">
+
+    <div class="fatbike-header">
+      <h2>🏔️ Fatbikes électriques — L'expérience tout-terrain</h2>
+      <p>Pneus surdimensionnés, moteurs puissants, sensations extrêmes. Pour ceux qui veulent sortir des sentiers battus.</p>
+    </div>
+
+    <!-- WARNING LÉGAL -->
+    <div class="fatbike-warning">
+      <div class="fatbike-warning-title">
+        <span>⚠️</span> Important : réglementation française sur les fatbikes électriques
+      </div>
+      <div class="fatbike-warning-body">
+        <p>En France, un vélo à assistance électrique (VAE) légal doit respecter ces deux limites : <strong>moteur ≤ 250W nominal</strong> et <strong>assistance coupée à 25 km/h</strong>. De nombreux fatbikes électriques dépassent ces seuils.</p>
+        <p style="margin-top:10px">Si le fatbike que vous choisissez dépasse ces limites, il est juridiquement considéré comme un <strong>cyclomoteur de catégorie L1e</strong> et impose obligatoirement :</p>
+        <ul class="fatbike-warning-list">
+          <li>📋 <strong>Immatriculation</strong> — carte grise obligatoire</li>
+          <li>🛡️ <strong>Assurance</strong> responsabilité civile obligatoire</li>
+          <li>⛑️ <strong>Casque homologué moto</strong> (ECE 22.06 ou équivalent)</li>
+          <li>🧤 <strong>Gants homologués CE</strong> (catégorie moto)</li>
+          <li>🚫 <strong>Interdit sur les pistes cyclables</strong> — circulation sur la voie publique uniquement</li>
+          <li>🪪 <strong>Permis AM</strong> (ex-BSR) minimum ou permis B</li>
+          <li>🔧 <strong>Bridage à 45 km/h max</strong> pour la catégorie L1e-B</li>
+        </ul>
+        <p class="fatbike-warning-footer">⚖️ Ces informations sont données à titre indicatif. Vérifiez toujours la conformité du modèle choisi auprès du vendeur et des autorités compétentes avant tout achat. La réglementation peut évoluer.</p>
+      </div>
+    </div>
+
+    <!-- CARTES FATBIKE -->
+    <div id="fatbike-loader" class="fatbike-loader">Chargement des fatbikes...</div>
+    <div class="fatbike-grid" id="fatbike-container"></div>
+
+    <div class="fatbike-cta">
+      <a href="/catalogue.html?categorie=fatbike">Voir tous les fatbikes du catalogue →</a>
+    </div>
+
+  </div>
+</section>
+
 <script>
 let listeLocaleVelos=[];
 async function initialiserCatalogue(){
@@ -104,9 +180,11 @@ async function initialiserCatalogue(){
     genererCartesHTML(selectionAccueil(listeLocaleVelos));
     const compteurEl = document.getElementById('total-velos-count');
     if (compteurEl) compteurEl.textContent = listeLocaleVelos.length;
+    afficherFatbikes(listeLocaleVelos);
   }catch(err){
     console.error(err);
     document.getElementById('loader').innerText="Erreur de synchronisation avec Supabase.";
+    document.getElementById('fatbike-loader').innerText="Impossible de charger les fatbikes.";
   }
 }
 function formaterDescriptionEnPuces(texte){
@@ -123,25 +201,56 @@ function formaterDescriptionEnPuces(texte){
 
 function selectionAccueil(liste){
   const cargos = liste.filter(velo => {
-    const texte = [
-      velo.nom,
-      velo.marque,
-      velo.modele,
-      velo.moteur,
-      velo.batterie,
-      velo.description_ia,
-      velo.description
-    ].filter(Boolean).join(' ').toLowerCase();
-
+    const texte = [velo.nom,velo.marque,velo.modele,velo.moteur,velo.batterie,velo.description_ia,velo.description].filter(Boolean).join(' ').toLowerCase();
     return texte.includes('cargo') || texte.includes('biporteur') || texte.includes('longtail') || texte.includes('famille');
   });
-
   const velosNormaux = liste.filter(velo => !cargos.includes(velo));
-
   const meilleurCargo = cargos.sort((a,b) => Number(b.prix || 0) - Number(a.prix || 0))[0];
   const meilleurNormal = velosNormaux.sort((a,b) => Number(b.prix || 0) - Number(a.prix || 0))[0];
-
   return [meilleurNormal, meilleurCargo].filter(Boolean);
+}
+
+function estFatbike(velo){
+  const texte = [velo.nom,velo.marque,velo.modele,velo.categorie,velo.description_ia,velo.description].filter(Boolean).join(' ').toLowerCase();
+  return texte.includes('fatbike') || texte.includes('fat bike') || texte.includes('fat-bike') || texte.includes('fat tire') || velo.categorie === 'fatbike';
+}
+
+function afficherFatbikes(liste){
+  const loaderEl = document.getElementById('fatbike-loader');
+  const container = document.getElementById('fatbike-container');
+  const fatbikes = liste.filter(estFatbike).slice(0, 2);
+
+  loaderEl.style.display = 'none';
+
+  if(!fatbikes.length){
+    container.innerHTML = "<p style='color:rgba(255,255,255,.5);text-align:center;width:100%'>Aucun fatbike disponible pour le moment. Revenez bientôt !</p>";
+    return;
+  }
+
+  fatbikes.forEach(velo => {
+    const imageSrc = (velo.image_url && velo.image_url.trim() !== '') ? velo.image_url : 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=600&q=80';
+    const marque = velo.marque || '';
+    const card = document.createElement('div');
+    card.className = 'fatbike-card';
+    card.innerHTML = `
+      <div class="image-container">
+        <img src="${imageSrc}" class="velo-img" alt="${velo.nom||''}">
+        <div class="velo-badge-price">${velo.prix||0} €</div>
+      </div>
+      <div class="fatbike-card-body">
+        <div class="fatbike-badge-legal">⚠️ Vérifier conformité réglementaire</div>
+        <h3 class="fatbike-card-name">${velo.nom||''}</h3>
+        ${marque ? `<div class="fatbike-card-brand">${marque}</div>` : ''}
+        <div class="fatbike-card-specs">
+          <div class="fatbike-spec-row"><span class="fatbike-spec-label">Moteur</span><span class="fatbike-spec-value">${velo.moteur||'N/A'}</span></div>
+          ${velo.couple_moteur ? `<div class="fatbike-spec-row"><span class="fatbike-spec-label">Couple</span><span class="fatbike-spec-value">${velo.couple_moteur} Nm</span></div>` : ''}
+          <div class="fatbike-spec-row"><span class="fatbike-spec-label">Batterie</span><span class="fatbike-spec-value">${velo.batterie||'N/A'}</span></div>
+          ${velo.autonomie ? `<div class="fatbike-spec-row"><span class="fatbike-spec-label">Autonomie</span><span class="fatbike-spec-value">~${velo.autonomie} km</span></div>` : ''}
+          ${velo.poids ? `<div class="fatbike-spec-row"><span class="fatbike-spec-label">Poids</span><span class="fatbike-spec-value">${velo.poids} kg</span></div>` : ''}
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
 }
 
 function genererCartesHTML(liste){
