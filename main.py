@@ -162,15 +162,24 @@ def health():
     return {"status": "ok", "service": "VéloÉlec & Co API"}
 
 
-@app.get("/robots.txt", response_class=PlainTextResponse)
+@app.get("/robots.txt")
 def robots_txt():
-    return (
+    from fastapi.responses import Response
+    contenu = (
         "User-agent: *\n"
+        "Allow: /\n\n"
+        "User-agent: Googlebot\n"
         "Allow: /\n\n"
         "User-agent: GPTBot\n"
         "Allow: /\n\n"
         "User-agent: Google-Extended\n"
-        "Allow: /\n"
+        "Allow: /\n\n"
+        "Sitemap: https://comparateur-velo.onrender.com/sitemap.xml\n"
+    )
+    return Response(
+        content=contenu,
+        media_type="text/plain",
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
     )
 
 
