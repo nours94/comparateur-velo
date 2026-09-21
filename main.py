@@ -40,10 +40,18 @@ class VeloDB(Base):
     batterie = Column(String, nullable=True)
     description_ia = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
-
-    # Étape 1 : nouveaux champs ajoutés progressivement
     marque = Column(String, nullable=True)
     modele = Column(String, nullable=True)
+
+    # Champs ajoutés (alignés sur le schéma réel Supabase)
+    marque_moteur = Column(String, nullable=True)
+    couple_moteur = Column(Integer, nullable=True)      # Nm
+    energie_moteur = Column(Integer, nullable=True)     # Watts
+    autonomie = Column(Integer, nullable=True)           # km
+    categorie = Column(String, nullable=True)
+    poids = Column(Float, nullable=True)                 # kg
+    taille_min = Column(Integer, nullable=True)           # cm
+    taille_max = Column(Integer, nullable=True)           # cm
 
 
 class ReparateurDB(Base):
@@ -102,6 +110,14 @@ def velo_to_dict(v: VeloDB):
         "description_ia": v.description_ia or "",
         "description": v.description_ia or "",
         "image_url": v.image_url or "",
+        "marque_moteur": v.marque_moteur or "",
+        "couple_moteur": v.couple_moteur,
+        "energie_moteur": v.energie_moteur,
+        "autonomie": v.autonomie,
+        "categorie": v.categorie or "",
+        "poids": v.poids,
+        "taille_min": v.taille_min,
+        "taille_max": v.taille_max,
     }
 
 
@@ -118,6 +134,26 @@ def reparateur_to_dict(r: ReparateurDB):
     }
 
 
+def _vers_int(valeur):
+    """Convertit une chaîne (potentiellement vide) en int, ou None."""
+    if valeur is None or str(valeur).strip() == "":
+        return None
+    try:
+        return int(float(valeur))
+    except (ValueError, TypeError):
+        return None
+
+
+def _vers_float(valeur):
+    """Convertit une chaîne (potentiellement vide) en float, ou None."""
+    if valeur is None or str(valeur).strip() == "":
+        return None
+    try:
+        return float(valeur)
+    except (ValueError, TypeError):
+        return None
+
+
 # -------------------------------------------------------------------------
 # ROUTES TECHNIQUES
 # -------------------------------------------------------------------------
@@ -126,16 +162,42 @@ def health():
     return {"status": "ok", "service": "VéloÉlec & Co API"}
 
 
-@app.get("/robots.txt", response_class=PlainTextResponse)
+@app.get("/robots.txt")
 def robots_txt():
-    return (
+    from fastapi.responses import Response
+    contenu = (
         "User-agent: *\n"
+        "Allow: /\n\n"
+        "User-agent: Googlebot\n"
         "Allow: /\n\n"
         "User-agent: GPTBot\n"
         "Allow: /\n\n"
         "User-agent: Google-Extended\n"
-        "Allow: /\n"
+        "Allow: /\n\n"
+        "Sitemap: https://comparateur-velo.onrender.com/sitemap.xml\n"
     )
+    return Response(
+        content=contenu,
+        media_type="text/plain",
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
+    )
+
+
+@app.get("/llms.txt", response_class=PlainTextResponse)
+def llms_txt():
+    if os.path.exists("llms.txt"):
+        with open("llms.txt", "r", encoding="utf-8") as f:
+            return PlainTextResponse(content=f.read())
+
+    raise HTTPException(status_code=404, detail="llms.txt introuvable.")
+
+
+@app.get("/sitemap.xml")
+def sitemap_xml():
+    if os.path.exists("sitemap.xml"):
+        return FileResponse("sitemap.xml", media_type="application/xml")
+
+    raise HTTPException(status_code=404, detail="sitemap.xml introuvable.")
 
 
 # -------------------------------------------------------------------------
@@ -157,6 +219,10 @@ def recuperer_un_velo(id_velo: str, db: Session = Depends(get_db)):
     return velo_to_dict(velo)
 
 
+@app.get("/robots.txt")
+def robots_txt():
+    return FileResponse("robots.txt", media_type="text/plain")
+
 @app.get("/api/reparateurs")
 def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
     reparateurs = db.query(ReparateurDB).all()
@@ -167,28 +233,204 @@ def recuperer_tous_les_reparateurs(db: Session = Depends(get_db)):
 # ROUTE IA POUR GPT PERSONNALISÉ
 # -------------------------------------------------------------------------
 @app.get("/api/ia/catalogue")
-def catalogue_pour_ia(db: Session = Depends(get_db)):
-    velos = db.query(VeloDB).all()
+def catalogue_pour_ia(
+    budget_max: int | None = None,
+    categorie: str | None = None,
+    taille_cm: int | None = None,
+    recherche: str | None = None,
+    limit: int = 30,
+    db: Session = Depends(get_db),
+):
+    """
+    Catalogue allégé pour le GPT personnalisé.
+
+    Objectif : ne pas renvoyer les 500 vélos d'un coup,
+    mais permettre au GPT de filtrer intelligemment par budget,
+    catégorie, taille et mots-clés, tout en conservant les photos.
+    """
+
+    # Sécurité : on évite qu'un appel GPT ramène trop de vélos
+    if limit is None or limit <= 0:
+        limit = 60
+    limit = min(limit, 100)
+
+    query = db.query(VeloDB)
+
+    if budget_max is not None:
+        query = query.filter(VeloDB.prix <= budget_max)
+
+    # Important : les cargos peuvent être indiqués dans la catégorie,
+    # mais aussi seulement dans le nom, le modèle ou la description.
+    if categorie:
+        mot = f"%{categorie}%"
+        query = query.filter(
+            (VeloDB.categorie.ilike(mot))
+            | (VeloDB.nom.ilike(mot))
+            | (VeloDB.modele.ilike(mot))
+            | (VeloDB.description_ia.ilike(mot))
+        )
+
+    # Recherche libre complémentaire : ville, cargo, longtail, Bosch, enfant, etc.
+    if recherche:
+        mot = f"%{recherche}%"
+        query = query.filter(
+            (VeloDB.nom.ilike(mot))
+            | (VeloDB.marque.ilike(mot))
+            | (VeloDB.modele.ilike(mot))
+            | (VeloDB.moteur.ilike(mot))
+            | (VeloDB.batterie.ilike(mot))
+            | (VeloDB.categorie.ilike(mot))
+            | (VeloDB.description_ia.ilike(mot))
+        )
+
+    if taille_cm is not None:
+        query = query.filter(
+            (VeloDB.taille_min == None) | (VeloDB.taille_min <= taille_cm),
+            (VeloDB.taille_max == None) | (VeloDB.taille_max >= taille_cm),
+        )
+
+    filtre_categorie_actif = bool(categorie) or bool(recherche)
+
+    if filtre_categorie_actif:
+        # Un filtre explicite a été demandé : on garde le tri simple par prix.
+        velos = (
+            query
+            .order_by(VeloDB.prix.asc())
+            .limit(limit)
+            .all()
+        )
+    else:
+        # Aucun filtre catégorie/recherche fourni par le GPT : risque que les
+        # vélos les moins chers (toutes catégories confondues) saturent la
+        # limite et masquent des familles entières de vélos (ex: cargo).
+        # On garantit donc un quota minimal par grande catégorie avant de
+        # compléter avec les moins chers du reste du catalogue.
+        categories_a_garantir = [
+            "cargo", "VTT", "ville", "VTC", "pliant", "route"
+        ]
+        quota_par_categorie = max(3, limit // (len(categories_a_garantir) + 1))
+
+        velos_par_id: dict = {}
+
+        for mot_categorie in categories_a_garantir:
+            mot = f"%{mot_categorie}%"
+            sous_resultats = (
+                query
+                .filter(
+                    (VeloDB.categorie.ilike(mot))
+                    | (VeloDB.nom.ilike(mot))
+                    | (VeloDB.modele.ilike(mot))
+                )
+                .order_by(VeloDB.prix.asc())
+                .limit(quota_par_categorie)
+                .all()
+            )
+            for v in sous_resultats:
+                velos_par_id[v.identifiant] = v
+
+        # On complète avec les moins chers du reste du catalogue, sans
+        # dépasser la limite globale demandée.
+        if len(velos_par_id) < limit:
+            complement = (
+                query
+                .order_by(VeloDB.prix.asc())
+                .limit(limit)
+                .all()
+            )
+            for v in complement:
+                if len(velos_par_id) >= limit:
+                    break
+                velos_par_id[v.identifiant] = v
+
+        velos = sorted(velos_par_id.values(), key=lambda v: v.prix or 0)[:limit]
 
     return {
         "site": "VéloÉlec & Co",
-        "version": "Progressive 1.1",
-        "objectif": "Comparateur indépendant de vélos électriques",
+        "version": "Progressive 1.4",
         "nombre_velos": len(velos),
+        "conseil_affichage": "Pour afficher les photos dans ChatGPT, utiliser le champ photo_markdown.",
         "velos": [
             {
-                "identifiant": v.identifiant,
+                "id": v.identifiant,
                 "nom": v.nom,
                 "marque": v.marque or "",
                 "modele": v.modele or "",
                 "prix": v.prix or 0,
+                "categorie": v.categorie or "",
                 "moteur": v.moteur or "",
                 "batterie": v.batterie or "",
-                "description": v.description_ia or "",
+                "autonomie": v.autonomie,
+                "couple_moteur": v.couple_moteur,
+                "energie_moteur": v.energie_moteur,
+                "poids": v.poids,
+                "taille_min": v.taille_min,
+                "taille_max": v.taille_max,
+                "description_ia": v.description_ia or "",
                 "image_url": v.image_url or "",
+                "photo_markdown": f"![{v.nom}]({v.image_url})" if v.image_url else "",
             }
             for v in velos
         ],
+    }
+
+# -------------------------------------------------------------------------
+# ROUTE DIAGNOSTIC : RÉPARTITION DU CATALOGUE PAR CATÉGORIE
+# -------------------------------------------------------------------------
+@app.get("/api/ia/catalogue/stats")
+def stats_catalogue(db: Session = Depends(get_db)):
+    """
+    Diagnostic rapide : permet de vérifier que chaque grande catégorie
+    de vélos est bien représentée, et de détecter en amont si l'une
+    d'elles risque d'être noyée par le tri prix de getCatalogueIA.
+
+    À surveiller particulièrement après chaque import via robot_ia.py,
+    ou si une nouvelle grande catégorie de vélos apparaît dans le
+    catalogue (pliant, route, etc.) et doit être ajoutée à la liste
+    categories_a_garantir de l'endpoint /api/ia/catalogue.
+    """
+
+    categories_a_garantir = [
+        "cargo", "VTT", "ville", "VTC", "pliant", "route"
+    ]
+
+    total_velos = db.query(VeloDB).count()
+
+    repartition = []
+    for mot_categorie in categories_a_garantir:
+        mot = f"%{mot_categorie}%"
+        nombre = (
+            db.query(VeloDB)
+            .filter(
+                (VeloDB.categorie.ilike(mot))
+                | (VeloDB.nom.ilike(mot))
+                | (VeloDB.modele.ilike(mot))
+            )
+            .count()
+        )
+        repartition.append({
+            "categorie": mot_categorie,
+            "nombre_velos": nombre,
+            "alerte": nombre == 0,
+        })
+
+    # Vélos qui ne correspondent à aucune des catégories surveillées,
+    # utile pour repérer une catégorie manquante dans la liste.
+    nombre_categorise = sum(r["nombre_velos"] for r in repartition)
+
+    return {
+        "total_velos_catalogue": total_velos,
+        "repartition_categories_surveillees": repartition,
+        "note": (
+            "Le total par catégorie peut dépasser total_velos_catalogue "
+            "si un vélo correspond à plusieurs mots-clés (ex: nom contenant "
+            "à la fois 'cargo' et 'ville'). Une categorie avec alerte=true "
+            "signifie qu'aucun vélo ne correspond actuellement à ce mot-clé : "
+            "vérifier si la catégorie a été renommée ou si le stock est "
+            "réellement vide."
+        ),
+        "nombre_velos_non_categorises_estimes": max(
+            0, total_velos - nombre_categorise
+        ),
     }
 
 # -------------------------------------------------------------------------
@@ -216,6 +458,14 @@ def ajouter_nouveau_velo(
     image_url: str = Form(None),
     marque: str = Form(None),
     modele: str = Form(None),
+    marque_moteur: str = Form(None),
+    couple_moteur: str = Form(None),
+    energie_moteur: str = Form(None),
+    autonomie: str = Form(None),
+    categorie: str = Form(None),
+    poids: str = Form(None),
+    taille_min: str = Form(None),
+    taille_max: str = Form(None),
     robot_token_form: str = Form(...),
     db: Session = Depends(get_db),
 ):
@@ -239,6 +489,14 @@ def ajouter_nouveau_velo(
         image_url=image_url,
         marque=marque,
         modele=modele,
+        marque_moteur=marque_moteur,
+        couple_moteur=_vers_int(couple_moteur),
+        energie_moteur=_vers_int(energie_moteur),
+        autonomie=_vers_int(autonomie),
+        categorie=categorie,
+        poids=_vers_float(poids),
+        taille_min=_vers_int(taille_min),
+        taille_max=_vers_int(taille_max),
     )
 
     db.add(nouveau_velo)
@@ -261,6 +519,14 @@ def modifier_velo_existant(
     image_url: str = Form(None),
     marque: str = Form(None),
     modele: str = Form(None),
+    marque_moteur: str = Form(None),
+    couple_moteur: str = Form(None),
+    energie_moteur: str = Form(None),
+    autonomie: str = Form(None),
+    categorie: str = Form(None),
+    poids: str = Form(None),
+    taille_min: str = Form(None),
+    taille_max: str = Form(None),
     robot_token_form: str = Form(...),
     db: Session = Depends(get_db),
 ):
@@ -280,6 +546,14 @@ def modifier_velo_existant(
     velo.image_url = image_url
     velo.marque = marque
     velo.modele = modele
+    velo.marque_moteur = marque_moteur
+    velo.couple_moteur = _vers_int(couple_moteur)
+    velo.energie_moteur = _vers_int(energie_moteur)
+    velo.autonomie = _vers_int(autonomie)
+    velo.categorie = categorie
+    velo.poids = _vers_float(poids)
+    velo.taille_min = _vers_int(taille_min)
+    velo.taille_max = _vers_int(taille_max)
 
     db.commit()
 
@@ -304,6 +578,24 @@ def page_administration():
         return FileResponse("admin.html")
 
     raise HTTPException(status_code=404, detail="admin.html introuvable.")
+
+
+@app.get("/catalogue.html", response_class=HTMLResponse)
+def page_catalogue():
+    if os.path.exists("catalogue.html"):
+        with open("catalogue.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    raise HTTPException(status_code=404, detail="catalogue.html introuvable.")
+
+
+@app.get("/top-10-velos-ville-electriques.html", response_class=HTMLResponse)
+def page_top10_ville():
+    if os.path.exists("top-10-velos-ville-electriques.html"):
+        with open("top-10-velos-ville-electriques.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    raise HTTPException(status_code=404, detail="top-10-velos-ville-electriques.html introuvable.")
 
 
 @app.get("/hero-bike.jpg")
