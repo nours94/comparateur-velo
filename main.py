@@ -604,3 +604,7 @@ def distribuer_image_hero():
         return FileResponse("hero-bike.jpg")
 
     raise HTTPException(status_code=404, detail="Image hero-bike.jpg introuvable.")
+
+@app.get("/favicon.png")
+def favicon():
+    return FileResponse("favicon.png")
