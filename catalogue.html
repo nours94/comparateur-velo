@@ -100,6 +100,8 @@ main{max-width:1200px;margin:0 auto 80px;padding:0 20px}
   </div>
 </section>
 
+<nav class="category-nav" id="category-nav"></nav>
+
 <p class="result-count" id="result-count"></p>
 
 <main>
@@ -110,6 +112,70 @@ main{max-width:1200px;margin:0 auto 80px;padding:0 20px}
 <script>
 let listeLocaleVelos = [];
 
+// Usage demande dans l'URL (?categorie=ville), venant des vignettes de
+// l'accueil. Ces vignettes utilisent des mots-cles courts qui ne
+// correspondent pas forcement au libelle exact stocke en base, d'ou le
+// rapprochement par mots-cles ci-dessous.
+let usageURL = '';
+
+const MOTS_CLES_USAGE = {
+  ville:['ville','urbain','city'],
+  vtc:['vtc','trekking','randonn'],
+  vtt:['vtt','tout-terrain','tout terrain','mtb'],
+  cargo:['cargo','biporteur','longtail','triporteur','famille'],
+  pliant:['pliant','pliable','folding'],
+  longue:['longue','autonomie','longue distance'],
+  fatbike:['fatbike','fat bike','fat-bike','fat tire'],
+};
+
+const LIBELLES_USAGE = {
+  ville:'Vélo de ville', vtc:'VTC / Trekking', vtt:'VTT électrique',
+  cargo:'Vélo cargo', pliant:'Vélo pliant', longue:'Longue autonomie',
+  fatbike:'Fatbike',
+};
+
+// On ne cherche que dans les champs structures : la description_ia evoque
+// souvent plusieurs usages a la fois et ferait correspondre presque tous
+// les velos a presque toutes les categories.
+function correspondUsage(velo, usage) {
+  if (!usage) return true;
+  const mots = MOTS_CLES_USAGE[usage] || [usage];
+  const champs = [velo.categorie, velo.nom, velo.modele]
+    .filter(Boolean).join(' ').toLowerCase();
+  return mots.some(m => champs.includes(m));
+}
+
+function appliquerCategorieURL() {
+  const brut = new URLSearchParams(window.location.search).get('categorie');
+  if (!brut) return;
+  const slug = brut.trim().toLowerCase();
+
+  // Si le libelle exact existe en base, on pre-selectionne la liste deroulante.
+  const select = document.getElementById('category-select');
+  const exact = [...select.options].find(o => o.value && o.value.toLowerCase() === slug);
+  if (exact) { select.value = exact.value; return; }
+
+  // Sinon on filtre par mots-cles, ce qui couvre plusieurs libelles a la fois.
+  usageURL = slug;
+}
+
+function majBandeauUsage() {
+  const nav = document.getElementById('category-nav');
+  if (!nav) return;
+  if (!usageURL) { nav.innerHTML = ''; return; }
+  const libelle = LIBELLES_USAGE[usageURL] || usageURL;
+  nav.innerHTML = `<span class="category-chip active">${libelle}</span>`
+    + `<span class="category-chip" onclick="effacerUsage()">✕ Voir tout le catalogue</span>`;
+}
+
+function effacerUsage() {
+  usageURL = '';
+  majBandeauUsage();
+  // On nettoie l'URL pour qu'un rechargement ne reapplique pas le filtre.
+  history.replaceState(null, '', window.location.pathname);
+  filtrerCatalogue();
+}
+
 async function initialiserCatalogue() {
   try {
     const response = await fetch('/api/velos');
@@ -117,10 +183,13 @@ async function initialiserCatalogue() {
     listeLocaleVelos = await response.json();
     document.getElementById('loader').style.display = 'none';
     remplirSelecteurCategories(listeLocaleVelos);
-    afficherCatalogue(listeLocaleVelos);
+    appliquerCategorieURL();
+    majBandeauUsage();
+    filtrerCatalogue();
   } catch (err) {
-    console.error(err);
-    document.getElementById('loader').innerText = "Erreur de synchronisation avec la base de données.";
+    console.error('[VeloElec] Catalogue indisponible :', err);
+    document.getElementById('loader').innerText =
+      "Impossible de charger le catalogue (" + (err.message || err) + ").";
   }
 }
 
@@ -175,7 +244,10 @@ function afficherCatalogue(liste) {
   container.innerHTML = '';
 
   if (!liste || liste.length === 0) {
-    container.innerHTML = "<p class='no-results'>Aucun vélo ne correspond à ces critères.</p>";
+    container.innerHTML = usageURL
+      ? "<p class='no-results'>Aucun vélo n'est encore classé dans cette catégorie.<br>"
+        + "<a href='/catalogue.html' style='color:var(--pink-accent);font-weight:600'>Voir tout le catalogue</a></p>"
+      : "<p class='no-results'>Aucun vélo ne correspond à ces critères.</p>";
     resultCount.textContent = '';
     return;
   }
@@ -228,15 +300,22 @@ function afficherParCategorie(liste) {
 }
 
 function filtrerCatalogue() {
-  const texte = document.getElementById('search-input').value.toLowerCase();
+  const texte = document.getElementById('search-input').value.toLowerCase().trim();
   const categorieChoisie = document.getElementById('category-select').value;
+
+  // Choisir explicitement une categorie dans la liste deroulante prime sur
+  // le filtre venu de l'URL : sinon l'utilisateur ne pourrait plus en sortir.
+  if (categorieChoisie && usageURL) {
+    usageURL = '';
+    majBandeauUsage();
+  }
 
   const resultat = listeLocaleVelos.filter(velo => {
     const contenu = [velo.nom, velo.marque, velo.modele, velo.moteur, velo.marque_moteur, velo.batterie, velo.categorie, velo.description_ia]
       .filter(Boolean).join(' ').toLowerCase();
     const matchTexte = contenu.includes(texte);
     const matchCategorie = !categorieChoisie || velo.categorie === categorieChoisie;
-    return matchTexte && matchCategorie;
+    return matchTexte && matchCategorie && correspondUsage(velo, usageURL);
   });
 
   afficherCatalogue(resultat);
